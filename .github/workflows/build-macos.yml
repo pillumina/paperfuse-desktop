@@ -1,0 +1,178 @@
+name: Build macOS DMG
+
+on:
+  release:
+    types: [created]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: aarch64-apple-darwin
+            arch: arm64
+            runner: macos-15
+          - target: x86_64-apple-darwin
+            arch: x86_64
+            runner: macos-15-intel
+
+    runs-on: ${{ matrix.runner }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          clean: true
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Clean any cached builds
+        run: |
+          rm -rf node_modules
+          rm -rf dist
+          rm -rf src-tauri/target
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Rust target
+        run: |
+          rustup target add ${{ matrix.target }}
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Build Tauri app
+        run: |
+          npm run tauri build -- --target ${{ matrix.target }}
+        env:
+          TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
+          TAURI_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
+
+      - name: Rename bundle with architecture
+        run: |
+          cd src-tauri/target/${{ matrix.target }}/release/bundle
+          if [ -d "dmg" ]; then
+            for dmg in dmg/*.dmg; do
+              if [ -f "$dmg" ]; then
+                # Don't add arch suffix - we'll handle it in universal step
+                # Just ensure we have the base name
+                echo "Found DMG: $dmg"
+              fi
+            done
+          fi
+
+      - name: Upload DMG (single arch)
+        uses: actions/upload-artifact@v4
+        with:
+          name: paperfuse-${{ matrix.arch }}
+          path: src-tauri/target/${{ matrix.target }}/release/bundle/dmg/*.dmg
+          if-no-files-found: warn
+
+  create-universal:
+    needs: build
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download arm64 artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: paperfuse-arm64
+          path: artifacts/arm64
+
+      - name: Download x86_64 artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: paperfuse-x86_64
+          path: artifacts/x86_64
+
+      - name: Create Universal DMG
+        run: |
+          # Get the base name (version)
+          ARM64_DMG=$(find artifacts/arm64 -name '*.dmg' | head -1)
+          X86_DMG=$(find artifacts/x86_64 -name '*.dmg' | head -1)
+
+          if [ -z "$ARM64_DMG" ] || [ -z "$X86_DMG" ]; then
+            echo "Error: Could not find DMG files"
+            exit 1
+          fi
+
+          echo "Arm64 DMG: $ARM64_DMG"
+          echo "x86_64 DMG: $X86_DMG"
+
+          # Extract version from filename (Tauri uses aarch64 and x64, not arm64 and x86_64)
+          VERSION=$(echo "$ARM64_DMG" | sed -E 's/.*PaperFuse_([0-9.]+)_(aarch64|arm64).dmg/\1/')
+
+          # Create temp directory
+          mkdir -p temp-universal
+
+          # Mount both DMGs
+          ARM64_MOUNT=$(hdiutil attach "$ARM64_DMG" -readonly -mountpoint temp-universal/arm -nobrowse -noverify | grep '/dev/disk' | head -1 | awk '{print $1}')
+          X86_MOUNT=$(hdiutil attach "$X86_DMG" -readonly -mountpoint temp-universal/x86 -nobrowse -noverify | grep '/dev/disk' | head -1 | awk '{print $1}')
+
+          echo "Mounted: $ARM64_MOUNT and $X86_MOUNT"
+
+          # Copy arm64 app
+          cp -R temp-universal/arm/PaperFuse.app temp-universal/
+
+          # Create universal binary using lipo
+          lipo -create \
+            temp-universal/arm/PaperFuse.app/Contents/MacOS/paperfuse-desktop \
+            temp-universal/x86/PaperFuse.app/Contents/MacOS/paperfuse-desktop \
+            -output temp-universal/PaperFuse.app/Contents/MacOS/paperfuse-desktop
+
+          # Verify universal binary
+          lipo -info temp-universal/PaperFuse.app/Contents/MacOS/paperfuse-desktop
+
+          # Unmount
+          hdiutil detach "$ARM64_MOUNT" || true
+          hdiutil detach "$X86_MOUNT" || true
+
+          # Create new DMG
+          mkdir -p release
+          hdiutil create -volname "PaperFuse" \
+            -srcfolder temp-universal/PaperFuse.app \
+            -ov -format UDZO \
+            "release/PaperFuse_${VERSION}_universal.dmg"
+
+          # Cleanup
+          rm -rf temp-universal
+
+      - name: Upload Universal DMG
+        uses: actions/upload-artifact@v4
+        with:
+          name: paperfuse-universal
+          path: release/*.dmg
+
+      - name: Release (only on tags)
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release/*.dmg
+          draft: false
+          prerelease: false
+          body: |
+            ## 📥 Installation
+
+            Download `PaperFuse_*_universal.dmg` - this works on both Intel and Apple Silicon Macs.
+
+            ## 🎉 What's New
+
+            See the changelog below for details.
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

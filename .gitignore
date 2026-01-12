@@ -27,3 +27,5 @@ dist-ssr
 *.db
 *.sqlite
 *.sqlite3
+
+CLAUDE.md

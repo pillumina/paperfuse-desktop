@@ -3,6 +3,8 @@
     "title": "Select Analysis Mode",
     "analyzingPapers": "Analyzing {{count}} papers...",
     "languageLabel": "Language",
+    "languageZh": "中文",
+    "languageEn": "English",
     "standard": {
       "title": "Standard Analysis",
       "description": "Analyze introduction and conclusion sections for quick insights",

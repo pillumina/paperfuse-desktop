@@ -143,7 +143,7 @@ export function PaperListItem({
           className="flex-shrink-0"
           onClick={(e) => e.stopPropagation()} // Prevent expanding when clicking actions
         >
-          <PaperActions paper={paper} onDelete={onDelete} variant="row" />
+          <PaperActions paper={paper} onDelete={onDelete} onAnalyze={onAnalyze} variant="row" />
         </div>
       </div>
 

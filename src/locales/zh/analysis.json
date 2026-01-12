@@ -3,6 +3,8 @@
     "title": "选择分析模式",
     "analyzingPapers": "正在分析 {{count}} 篇论文...",
     "languageLabel": "语言",
+    "languageZh": "中文",
+    "languageEn": "English",
     "standard": {
       "title": "标准分析",
       "description": "分析引言和结论部分以获取快速洞察",

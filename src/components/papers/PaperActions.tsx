@@ -1,16 +1,29 @@
-import { ExternalLink, Trash2, Copy, Check } from 'lucide-react';
+import { ExternalLink, Trash2, Copy, Check, Sparkles } from 'lucide-react';
 import { openUrl } from '@tauri-apps/plugin-opener';
 import { useState } from 'react';
 import type { Paper } from '../../lib/types';
+import { AnalysisModeDialog, type AnalysisMode, type AnalysisLanguage } from './AnalysisModeDialog';
 
 interface PaperActionsProps {
   paper: Paper;
   onDelete?: (id: string) => void;
+  onAnalyze?: (id: string, mode: AnalysisMode, language: AnalysisLanguage) => void;
   variant?: 'row' | 'dropdown';
 }
 
-export function PaperActions({ paper, onDelete, variant = 'row' }: PaperActionsProps) {
+export function PaperActions({ paper, onDelete, onAnalyze, variant = 'row' }: PaperActionsProps) {
   const [copied, setCopied] = useState(false);
+  const [showAnalysisDialog, setShowAnalysisDialog] = useState(false);
+
+  const handleAnalyze = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowAnalysisDialog(true);
+  };
+
+  const handleAnalysisConfirm = (mode: AnalysisMode, language: AnalysisLanguage) => {
+    setShowAnalysisDialog(false);
+    onAnalyze?.(paper.id, mode, language);
+  };
 
   const handleOpenArXiv = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -39,35 +52,55 @@ export function PaperActions({ paper, onDelete, variant = 'row' }: PaperActionsP
 
   if (variant === 'row') {
     return (
-      <div className="flex items-center gap-1">
-        <button
-          onClick={handleOpenArXiv}
-          className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
-          title="View on ArXiv"
-        >
-          <ExternalLink className="w-4 h-4" />
-        </button>
-        <button
-          onClick={handleCopyLink}
-          className="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:hover:text-gray-300 dark:hover:bg-gray-800 rounded-lg transition-colors"
-          title="Copy link"
-        >
-          {copied ? (
-            <Check className="w-4 h-4 text-green-600" />
-          ) : (
-            <Copy className="w-4 h-4" />
-          )}
-        </button>
-        {onDelete && (
+      <>
+        <div className="flex items-center gap-1">
           <button
-            onClick={(e) => handleDelete(e)}
-            className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-            title="Delete paper"
+            onClick={handleOpenArXiv}
+            className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+            title="View on ArXiv"
           >
-            <Trash2 className="w-4 h-4" />
+            <ExternalLink className="w-4 h-4" />
           </button>
+          <button
+            onClick={handleCopyLink}
+            className="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:hover:text-gray-300 dark:hover:bg-gray-800 rounded-lg transition-colors"
+            title="Copy link"
+          >
+            {copied ? (
+              <Check className="w-4 h-4 text-green-600" />
+            ) : (
+              <Copy className="w-4 h-4" />
+            )}
+          </button>
+          {onAnalyze && (
+            <button
+              onClick={handleAnalyze}
+              className="p-1.5 text-gray-500 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-lg transition-colors"
+              title="Re-analyze"
+            >
+              <Sparkles className="w-4 h-4" />
+            </button>
+          )}
+          {onDelete && (
+            <button
+              onClick={(e) => handleDelete(e)}
+              className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+              title="Delete paper"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+
+        {/* Analysis Mode Dialog */}
+        {onAnalyze && (
+          <AnalysisModeDialog
+            isOpen={showAnalysisDialog}
+            onClose={() => setShowAnalysisDialog(false)}
+            onConfirm={handleAnalysisConfirm}
+          />
         )}
-      </div>
+      </>
     );
   }
 

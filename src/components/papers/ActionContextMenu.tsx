@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { Copy, ExternalLink, FileText, Trash2, Link, FolderPlus, Ban, Sparkles } from 'lucide-react';
 import type { Paper } from '../../lib/types';
 import { AddToCollectionDialog } from '../collections/AddToCollectionDialog';
-import { AnalysisModeDialog, type AnalysisMode } from './AnalysisModeDialog';
+import { AnalysisModeDialog, type AnalysisMode, type AnalysisLanguage } from './AnalysisModeDialog';
 import { useLanguage } from '../../contexts/LanguageContext';
 
 interface ActionContextMenuProps {
@@ -11,7 +11,7 @@ interface ActionContextMenuProps {
   children: React.ReactElement;
   onDelete?: (id: string) => void;
   onToggleSpam?: (id: string) => void;
-  onAnalyze?: (id: string, mode: AnalysisMode) => void;
+  onAnalyze?: (id: string, mode: AnalysisMode, language: AnalysisLanguage) => void;
 }
 
 export function ActionContextMenu({ paper, children, onDelete, onToggleSpam, onAnalyze }: ActionContextMenuProps) {
@@ -123,8 +123,8 @@ export function ActionContextMenu({ paper, children, onDelete, onToggleSpam, onA
     setIsAnalysisDialogOpen(true);
   };
 
-  const handleAnalysisConfirm = (mode: AnalysisMode) => {
-    onAnalyze?.(paper.id, mode);
+  const handleAnalysisConfirm = (mode: AnalysisMode, language: AnalysisLanguage) => {
+    onAnalyze?.(paper.id, mode, language);
   };
 
   return (

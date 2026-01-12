@@ -120,7 +120,22 @@ export function PaperCard({
 
             {/* Action Menu Button */}
             {onDelete && !isSelectionMode && (
-              <div className="absolute top-3 right-3 z-10">
+              <div className="absolute top-3 right-3 z-10 flex items-center gap-1">
+                {/* Quick Analyze Button */}
+                {onAnalyze && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowAnalysisDialog(true);
+                    }}
+                    className="p-1.5 text-purple-500 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                    title="Re-analyze"
+                  >
+                    <Sparkles className="w-4 h-4" />
+                  </button>
+                )}
+
+                {/* More Options Dropdown */}
                 <div className="relative">
                   <button
                     onClick={handleActionsClick}

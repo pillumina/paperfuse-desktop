@@ -1,0 +1,21 @@
+{
+  "title": "错误",
+  "messages": {
+    "loadingFailed": "加载数据失败",
+    "saveFailed": "保存失败",
+    "deleteFailed": "删除失败",
+    "networkError": "网络错误，请检查您的连接。",
+    "serverError": "服务器错误，请稍后重试。",
+    "notFound": "未找到资源",
+    "unauthorized": "未授权访问",
+    "invalidInput": "输入无效",
+    "unknown": "发生未知错误"
+  },
+  "validation": {
+    "required": "此字段为必填项",
+    "invalidFormat": "格式无效",
+    "tooShort": "太短",
+    "tooLong": "太长",
+    "invalidEmail": "邮箱地址无效"
+  }
+}

@@ -1,0 +1,142 @@
+{
+  "title": "Fetch Papers from ArXiv",
+  "titleFetching": "Fetching Papers...",
+  "description": "Configure and fetch research papers automatically",
+  "descriptionFetching": "You can close this dialog and continue working. Progress will be shown at the top.",
+  "close": "Close",
+  "closeContinue": "Close dialog (fetch will continue)",
+  "errors": {
+    "rateLimited": "Rate Limited",
+    "authFailed": "Authentication Failed",
+    "networkError": "Network Error",
+    "cancelled": "Cancelled",
+    "notice": "Notice",
+    "error": "Error",
+    "retry": "Retry"
+  },
+  "success": {
+    "title": "Fetch Complete!",
+    "message": "{{saved}} papers saved, {{filtered}} filtered out",
+    "viewPapers": "View Papers",
+    "fetchMore": "Fetch More"
+  },
+  "progress": {
+    "eta": "ETA",
+    "found": "Found",
+    "analyzed": "Analyzed",
+    "saved": "Saved",
+    "filtered": "Filtered",
+    "duplicates": "Duplicates",
+    "skipped": "Skipped",
+    "fromCache": "From Cache",
+    "cached": "Cached",
+    "activeWorkers": "Active Workers",
+    "errors": "{{count}} errors occurred"
+  },
+  "basicOptions": "Basic Options",
+  "fetchMode": {
+    "label": "Fetch Mode",
+    "category": "By Category",
+    "byId": "By arXiv ID"
+  },
+  "arxivIds": {
+    "label": "arXiv IDs",
+    "placeholder": "2301.12345, 2301.67890",
+    "help": "Enter one or more arXiv IDs, separated by commas. Format: YYMM.NNNNN (e.g., 2301.12345)"
+  },
+  "errors": {
+    "rateLimited": "Rate Limited",
+    "authFailed": "Authentication Failed",
+    "networkError": "Network Error",
+    "cancelled": "Cancelled",
+    "notice": "Notice",
+    "error": "Error",
+    "retry": "Retry",
+    "noIds": "Please enter at least one arXiv ID",
+    "invalidIds": "Invalid arXiv ID format: {{ids}}"
+  },
+  "maxPapers": {
+    "label": "Max Papers to Fetch",
+    "custom": "Custom...",
+    "orUsePreset": "or use preset"
+  },
+  "dateRange": {
+    "label": "Date Range",
+    "preset": "Preset",
+    "custom": "Custom Range",
+    "24h": "24h",
+    "3days": "3 days",
+    "7days": "7 days",
+    "14days": "14 days",
+    "30days": "30 days",
+    "allTime": "All time",
+    "fromDate": "From",
+    "toDate": "To"
+  },
+  "aiOptions": "AI Analysis Options",
+  "optional": "(Optional)",
+  "infoBox": {
+    "title": "What's AI analysis?",
+    "description": "Configure an API key to enable automatic paper classification, relevance scoring, and detailed insights. Without an API key, papers will be saved without AI processing."
+  },
+  "apiKeyStatus": {
+    "active": "{{provider}} API key is active",
+    "notConfigured": "{{provider}} API key not configured",
+    "noKey": "No API key configured",
+    "quickAnalysis": "Quick analysis will be performed automatically (relevance scores + tags)",
+    "hasOtherKey": "You have {{otherProvider}} API key configured, but not for {{provider}}. Switch provider above or configure {{provider}} key.",
+    "noAnalysis": "Papers will be saved without AI analysis",
+    "manage": "Manage",
+    "switchProvider": "Switch Provider",
+    "configure": "Configure"
+  },
+  "llmProvider": {
+    "label": "LLM Provider",
+    "glm": "GLM (ZhipuAI)",
+    "claude": "Claude (Anthropic)"
+  },
+  "asyncMode": {
+    "label": "Analysis Mode",
+    "sync": "Synchronous",
+    "async": "Asynchronous",
+    "syncDesc": "Process papers one at a time. Safer for API rate limits, but slower.",
+    "asyncDesc": "Process multiple papers simultaneously. Much faster, but may hit rate limits.",
+    "maxConcurrent": "Max Concurrent Papers",
+    "maxConcurrentDesc": "Number of papers to process simultaneously (1-5). Higher values are faster but may exceed API rate limits."
+  },
+  "language": {
+    "label": "Response Language",
+    "enDesc": "AI will respond in English. Recommended for better accuracy.",
+    "zhDesc": "AI 将用中文回复。更适合中文用户，但可能略微降低准确性。"
+  },
+  "deepAnalysis": {
+    "label": "Deep Analysis",
+    "requiresApiKey": "Requires API key",
+    "description": "Generate detailed summaries, key insights, and engineering notes (uses more tokens)",
+    "mode": "Analysis Mode",
+    "modeStandard": "Standard",
+    "modeFull": "Full",
+    "modeStandardDesc": "Introduction + Conclusion analysis with novelty and effectiveness scores",
+    "modeFullDesc": "Full paper analysis with experiment completeness, algorithm flowcharts, and complexity analysis",
+    "changeMode": "Change Mode",
+    "minRelevance": {
+      "label": "Min Relevance Score",
+      "saveMore": "Save more papers",
+      "saveRelevant": "Only save relevant papers",
+      "description": "Papers with score below this threshold will be filtered out and not saved."
+    },
+    "threshold": {
+      "label": "Deep Analysis Threshold",
+      "analyzeMore": "Analyze more papers",
+      "onlyRelevant": "Only highly relevant",
+      "description": "Saved papers with score at or above this threshold will receive full deep analysis."
+    }
+  },
+  "footer": {
+    "done": "Done",
+    "fetching": "Fetching papers...",
+    "cancel": "Cancel",
+    "cancelFetch": "Cancel",
+    "startFetch": "Start Fetch"
+  }
+}

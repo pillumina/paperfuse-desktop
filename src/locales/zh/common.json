@@ -1,0 +1,44 @@
+{
+  "buttons": {
+    "save": "保存",
+    "cancel": "取消",
+    "delete": "删除",
+    "edit": "编辑",
+    "close": "关闭",
+    "confirm": "确认",
+    "retry": "重试",
+    "reset": "重置",
+    "apply": "应用",
+    "clear": "清除",
+    "search": "搜索",
+    "back": "返回",
+    "next": "下一页",
+    "previous": "上一页",
+    "loading": "加载中...",
+    "saveChanges": "保存更改"
+  },
+  "labels": {
+    "loading": "加载中...",
+    "error": "错误",
+    "success": "成功",
+    "warning": "警告",
+    "info": "信息",
+    "search": "搜索"
+  },
+  "nav": {
+    "home": "首页",
+    "papers": "论文",
+    "spam": "垃圾箱",
+    "collections": "收藏",
+    "settings": "设置"
+  },
+  "language": {
+    "en": "English",
+    "zh": "中文",
+    "system": "跟随系统",
+    "switchLanguage": "切换语言",
+    "languageTooltip": "切换语言 (Ctrl/Cmd+L)"
+  },
+  "keyboardShortcuts": "键盘快捷键",
+  "skipToContent": "跳转到主要内容"
+}

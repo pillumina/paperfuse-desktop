@@ -1,0 +1,44 @@
+{
+  "buttons": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "close": "Close",
+    "confirm": "Confirm",
+    "retry": "Retry",
+    "reset": "Reset",
+    "apply": "Apply",
+    "clear": "Clear",
+    "search": "Search",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "loading": "Loading...",
+    "saveChanges": "Save Changes"
+  },
+  "labels": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "warning": "Warning",
+    "info": "Info",
+    "search": "Search"
+  },
+  "nav": {
+    "home": "Home",
+    "papers": "Papers",
+    "spam": "Spam",
+    "collections": "Collections",
+    "settings": "Settings"
+  },
+  "language": {
+    "en": "English",
+    "zh": "中文",
+    "system": "System",
+    "switchLanguage": "Switch Language",
+    "languageTooltip": "Switch language (Ctrl/Cmd+L)"
+  },
+  "keyboardShortcuts": "Keyboard Shortcuts",
+  "skipToContent": "Skip to main content"
+}

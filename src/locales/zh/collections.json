@@ -1,0 +1,37 @@
+{
+  "title": "收藏",
+  "description": "将论文组织到收藏中",
+  "page": {
+    "title": "收藏",
+    "description": "将论文组织到收藏中",
+    "newCollection": "新建收藏",
+    "createCollection": "创建收藏",
+    "loading": "加载收藏中...",
+    "error": "加载收藏失败"
+  },
+  "add": "新建收藏",
+  "create": "创建收藏",
+  "edit": "编辑收藏",
+  "delete": "删除收藏",
+  "name": "收藏名称",
+  "description": "描述（可选）",
+  "paperCount": "{{count}} 篇论文",
+  "addTo": "添加到收藏",
+  "removeFrom": "从收藏移除",
+  "selectCollection": "选择收藏",
+  "noCollections": "暂无收藏",
+  "noCollectionsDescription": "创建收藏夹来按主题、项目或任何方式整理您的论文",
+  "deleteConfirm": "确定要删除此收藏吗？",
+  "empty": {
+    "title": "此收藏为空",
+    "description": "添加论文后在此显示"
+  },
+  "messages": {
+    "created": "收藏已创建",
+    "updated": "收藏已更新",
+    "deleted": "收藏已删除",
+    "createFailed": "创建收藏失败",
+    "updateFailed": "更新收藏失败",
+    "deleteFailed": "删除收藏失败"
+  }
+}

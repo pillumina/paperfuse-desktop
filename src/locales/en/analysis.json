@@ -1,0 +1,33 @@
+{
+  "selectMode": {
+    "title": "Select Analysis Mode",
+    "analyzingPapers": "Analyzing {{count}} papers...",
+    "languageLabel": "Language",
+    "standard": {
+      "title": "Standard Analysis",
+      "description": "Analyze introduction and conclusion sections for quick insights",
+      "feature1": "Introduction and conclusion only",
+      "feature2": "Faster processing time",
+      "feature3": "Key insights and scores"
+    },
+    "full": {
+      "title": "Full Analysis",
+      "description": "Comprehensive analysis of the complete paper content",
+      "feature1": "Complete LaTeX source analysis",
+      "feature2": "Detailed key insights",
+      "feature3": "Algorithm flowchart",
+      "feature4": "Time and space complexity"
+    },
+    "confirm": "Start Analysis"
+  },
+  "progress": {
+    "title": "Analyzing Papers",
+    "analyzing": "Analyzing...",
+    "completed": "Analysis Complete",
+    "error": "Analysis Error",
+    "papers": "papers",
+    "summary": "{{analyzed}} successfully analyzed, {{failed}} failed out of {{total}}",
+    "currentPaper": "Current Paper:"
+  },
+  "reanalyze": "Re-analyze"
+}

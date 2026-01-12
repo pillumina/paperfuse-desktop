@@ -1,0 +1,33 @@
+{
+  "selectMode": {
+    "title": "选择分析模式",
+    "analyzingPapers": "正在分析 {{count}} 篇论文...",
+    "languageLabel": "语言",
+    "standard": {
+      "title": "标准分析",
+      "description": "分析引言和结论部分以获取快速洞察",
+      "feature1": "仅分析引言和结论",
+      "feature2": "处理时间更快",
+      "feature3": "关键见解和评分"
+    },
+    "full": {
+      "title": "完整分析",
+      "description": "对完整论文内容进行综合分析",
+      "feature1": "完整 LaTeX 源码分析",
+      "feature2": "详细的关键见解",
+      "feature3": "算法流程图",
+      "feature4": "时间和空间复杂度"
+    },
+    "confirm": "开始分析"
+  },
+  "progress": {
+    "title": "正在分析论文",
+    "analyzing": "分析中...",
+    "completed": "分析完成",
+    "error": "分析错误",
+    "papers": "篇论文",
+    "summary": "共 {{total}} 篇，成功 {{analyzed}} 篇，失败 {{failed}} 篇",
+    "currentPaper": "当前论文："
+  },
+  "reanalyze": "重新分析"
+}

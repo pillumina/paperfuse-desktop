@@ -1,0 +1,15 @@
+{
+  "required": "{{field}} is required",
+  "minLength": "{{field}} must be at least {{min}} characters",
+  "maxLength": "{{field}} must be no more than {{max}} characters",
+  "invalidEmail": "Please enter a valid email address",
+  "invalidUrl": "Please enter a valid URL",
+  "invalidNumber": "Please enter a valid number",
+  "minValue": "{{field}} must be at least {{min}}",
+  "maxValue": "{{field}} must be no more than {{max}}",
+  "invalidTime": "Invalid time format. Use HH:MM (24-hour format)",
+  "invalidHour": "Invalid hour. Must be 00-23",
+  "invalidMinute": "Invalid minute. Must be 00-59",
+  "atLeastOne": "At least one {{item}} must be selected",
+  "invalidJson": "Invalid JSON format"
+}

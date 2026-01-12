@@ -1,0 +1,17 @@
+{
+  "title": "垃圾箱",
+  "description": "这些是被标记为垃圾的论文，它们不会在主列表中显示，但会被保留以防止重复下载。",
+  "empty": "垃圾箱为空",
+  "emptyDescription": "没有被标记为垃圾的论文",
+  "markAsSpam": "标记为垃圾",
+  "unmarkSpam": "取消标记",
+  "restore": "恢复",
+  "restoreAll": "恢复全部",
+  "permanentDelete": "永久删除",
+  "restoreConfirm": "确定要恢复这篇论文吗？",
+  "restoreAllConfirm": "确定要恢复所有论文吗？",
+  "permanentDeleteConfirm": "确定要永久删除这篇论文吗？此操作无法撤销。",
+  "restored": "已恢复",
+  "markedAsSpam": "已标记为垃圾",
+  "spamCount": "{{count}} 篇垃圾论文"
+}

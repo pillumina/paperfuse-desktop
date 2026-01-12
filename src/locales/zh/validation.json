@@ -1,0 +1,15 @@
+{
+  "required": "{{field}} 为必填项",
+  "minLength": "{{field}} 至少需要 {{min}} 个字符",
+  "maxLength": "{{field}} 不能超过 {{max}} 个字符",
+  "invalidEmail": "请输入有效的邮箱地址",
+  "invalidUrl": "请输入有效的 URL",
+  "invalidNumber": "请输入有效的数字",
+  "minValue": "{{field}} 必须至少为 {{min}}",
+  "maxValue": "{{field}} 不能超过 {{max}}",
+  "invalidTime": "无效的时间格式，请使用 HH:MM（24小时制）",
+  "invalidHour": "无效的小时数，必须是 00-23",
+  "invalidMinute": "无效的分钟数，必须是 00-59",
+  "atLeastOne": "至少需要选择一个 {{item}}",
+  "invalidJson": "无效的 JSON 格式"
+}

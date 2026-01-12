@@ -1,0 +1,73 @@
+{
+  "title": "PaperFuse",
+  "subtitle": "Daily AI research papers with engineering insights",
+  "stats": {
+    "totalPapers": "Total Papers",
+    "collections": "Collections",
+    "analyzed": "Analyzed",
+    "recentFetch": "Recent Fetch"
+  },
+  "welcome": {
+    "title": "Welcome to PaperFuse",
+    "description": "Your AI-powered research paper assistant",
+    "getStarted": "Get Started",
+    "setupApiKey": "Set up your API key",
+    "goToSettings": "Go to Settings →"
+  },
+  "gettingStarted": {
+    "title": "Getting Started",
+    "steps": {
+      "1": {
+        "title": "Configure API Keys",
+        "description": "Set up your LLM provider API key for paper analysis",
+        "note": "Optional: You can skip this for now and fetch papers without AI analysis",
+        "action": "Go to Settings →"
+      },
+      "2": {
+        "title": "Choose Your Topics",
+        "description": "Customize research topics you're interested in",
+        "action": "Manage Topics →"
+      },
+      "3": {
+        "title": "Configure ArXiv Categories",
+        "description": "Select which ArXiv categories to fetch papers from (AI, ML, CV, etc.)",
+        "action": "Configure Categories →"
+      },
+      "4": {
+        "title": "Fetch Papers",
+        "description": "Start fetching and analyzing papers from ArXiv",
+        "action": "Fetch Papers",
+        "viewProgress": "View Progress"
+      },
+      "5": {
+        "title": "Browse Your Papers",
+        "description": "View and manage your {{count}} research papers",
+        "action": "Browse Papers"
+      }
+    }
+  },
+  "apiKeyStatus": {
+    "title": "API Key Status",
+    "active": "Active",
+    "notSet": "Not Set",
+    "configured": "{{provider}} configured for AI analysis",
+    "configurePrompt": "Configure in Settings for AI features"
+  },
+  "fetching": {
+    "title": "Fetching Papers...",
+    "status": "Fetching Papers...",
+    "papersFound": "{{count}} found",
+    "papersSaved": "{{saved}} saved · {{found}} found",
+    "complete": "Fetch Complete",
+    "failed": "Fetch Failed",
+    "cancelled": "Fetch Cancelled",
+    "ready": "Ready",
+    "startFetch": "Click to start fetching papers"
+  },
+  "empty": {
+    "title": "No papers yet",
+    "description": "Start by fetching some papers from ArXiv!",
+    "fetchPapers": "Fetch Papers",
+    "browsePapers": "Browse Papers"
+  }
+}

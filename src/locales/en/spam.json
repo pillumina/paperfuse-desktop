@@ -1,0 +1,17 @@
+{
+  "title": "Spam",
+  "description": "These papers have been marked as spam and won't appear in the main list, but are kept to prevent re-downloading.",
+  "empty": "Spam is empty",
+  "emptyDescription": "No papers have been marked as spam",
+  "markAsSpam": "Mark as spam",
+  "unmarkSpam": "Unmark spam",
+  "restore": "Restore",
+  "restoreAll": "Restore all",
+  "permanentDelete": "Delete permanently",
+  "restoreConfirm": "Are you sure you want to restore this paper?",
+  "restoreAllConfirm": "Are you sure you want to restore all papers?",
+  "permanentDeleteConfirm": "Are you sure you want to permanently delete this paper? This action cannot be undone.",
+  "restored": "Restored",
+  "markedAsSpam": "Marked as spam",
+  "spamCount": "{{count}} spam papers"
+}

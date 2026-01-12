@@ -258,14 +258,14 @@ export default function PaperDetailPage() {
             <div className="mt-6">
               <div className="flex items-center justify-between mb-3">
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                  📚 所属 Collections
+                  📚 {t('papers.detail.collections.title')}
                 </h2>
                 <button
                   onClick={() => setShowAddToCollectionDialog(true)}
                   className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
                 >
                   <Plus className="w-4 h-4" />
-                  添加到 Collection
+                  {t('papers.detail.collections.addTo')}
                 </button>
               </div>
 
@@ -273,7 +273,7 @@ export default function PaperDetailPage() {
                 <div className="text-center py-6 bg-gray-50 dark:bg-gray-700/30 rounded-lg border border-dashed border-gray-300 dark:border-gray-600">
                   <FolderPlus className="w-10 h-10 text-gray-400 mx-auto mb-2" />
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    这篇论文还没有添加到任何 Collection
+                    {t('papers.detail.collections.empty')}
                   </p>
                 </div>
               ) : (
@@ -309,7 +309,7 @@ export default function PaperDetailPage() {
                             }
                           }}
                           className="opacity-0 group-hover:opacity-100 p-0.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400 rounded transition-all"
-                          title="从 Collection 移除"
+                          title={t('papers.detail.collections.removeFrom')}
                         >
                           <X className="w-3.5 h-3.5" />
                         </button>
@@ -415,20 +415,20 @@ export default function PaperDetailPage() {
                     <Clock className="w-4 h-4" />
                     {t('papers.detail.complexityAnalysis')}
                   </h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 gap-4">
                     {paper.time_complexity && (
                       <div>
                         <dt className="text-xs text-gray-500 dark:text-gray-400 mb-1">{t('papers.detail.timeComplexity')}</dt>
-                        <dd className="text-sm font-mono text-gray-900 dark:text-white bg-white dark:bg-gray-800 px-2 py-1 rounded">
-                          {paper.time_complexity}
+                        <dd className="text-xs text-gray-900 dark:text-white bg-white dark:bg-gray-800 px-3 py-2 rounded overflow-x-auto whitespace-normal break-words">
+                          <LaTeXRenderer latex={paper.time_complexity} display={false} />
                         </dd>
                       </div>
                     )}
                     {paper.space_complexity && (
                       <div>
                         <dt className="text-xs text-gray-500 dark:text-gray-400 mb-1">{t('papers.detail.spaceComplexity')}</dt>
-                        <dd className="text-sm font-mono text-gray-900 dark:text-white bg-white dark:bg-gray-800 px-2 py-1 rounded">
-                          {paper.space_complexity}
+                        <dd className="text-xs text-gray-900 dark:text-white bg-white dark:bg-gray-800 px-3 py-2 rounded overflow-x-auto whitespace-normal break-words">
+                          <LaTeXRenderer latex={paper.space_complexity} display={false} />
                         </dd>
                       </div>
                     )}
@@ -564,8 +564,11 @@ export default function PaperDetailPage() {
                       {algorithm.name}
                     </h3>
                     {algorithm.complexity && (
-                      <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
-                        {t('papers.detail.complexityAnalysis')}: {algorithm.complexity}
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mb-2 flex items-center gap-1">
+                        <span>{t('papers.detail.complexityAnalysis')}:</span>
+                        <span className="text-gray-700 dark:text-gray-300">
+                          <LaTeXRenderer latex={algorithm.complexity} display={false} />
+                        </span>
                       </p>
                     )}
                     <div>

@@ -4,6 +4,7 @@ import { Copy, ExternalLink, FileText, Trash2, Link, FolderPlus, Ban, Sparkles }
 import type { Paper } from '../../lib/types';
 import { AddToCollectionDialog } from '../collections/AddToCollectionDialog';
 import { AnalysisModeDialog, type AnalysisMode } from './AnalysisModeDialog';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 interface ActionContextMenuProps {
   paper: Paper;
@@ -14,6 +15,7 @@ interface ActionContextMenuProps {
 }
 
 export function ActionContextMenu({ paper, children, onDelete, onToggleSpam, onAnalyze }: ActionContextMenuProps) {
+  const { t } = useLanguage();
   const [isVisible, setIsVisible] = useState(false);
   const [position, setPosition] = useState({ top: 0, left: 0 });
   const [isCollectionDialogOpen, setIsCollectionDialogOpen] = useState(false);
@@ -148,7 +150,7 @@ export function ActionContextMenu({ paper, children, onDelete, onToggleSpam, onA
               className="w-full px-3 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 transition-colors"
             >
               <Copy className="w-4 h-4" />
-              <span>Copy title</span>
+              <span>{t('papers.contextMenu.copyTitle')}</span>
             </button>
 
             {/* Copy Link */}
@@ -157,7 +159,7 @@ export function ActionContextMenu({ paper, children, onDelete, onToggleSpam, onA
               className="w-full px-3 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 transition-colors"
             >
               <Link className="w-4 h-4" />
-              <span>Copy link</span>
+              <span>{t('papers.contextMenu.copyLink')}</span>
             </button>
 
             {/* Copy Citation */}
@@ -166,7 +168,7 @@ export function ActionContextMenu({ paper, children, onDelete, onToggleSpam, onA
               className="w-full px-3 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 transition-colors"
             >
               <Copy className="w-4 h-4" />
-              <span>Copy citation</span>
+              <span>{t('papers.contextMenu.copyCitation')}</span>
             </button>
 
             <div className="my-1 border-t border-gray-200 dark:border-gray-700" />
@@ -177,7 +179,7 @@ export function ActionContextMenu({ paper, children, onDelete, onToggleSpam, onA
               className="w-full px-3 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 transition-colors"
             >
               <FolderPlus className="w-4 h-4" />
-              <span>Add to collection</span>
+              <span>{t('papers.contextMenu.addToCollection')}</span>
             </button>
 
             {/* Re-analyze */}
@@ -187,7 +189,7 @@ export function ActionContextMenu({ paper, children, onDelete, onToggleSpam, onA
                 className="w-full px-3 py-2 text-left text-sm text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 flex items-center gap-2 transition-colors"
               >
                 <Sparkles className="w-4 h-4" />
-                <span>Re-analyze</span>
+                <span>{t('papers.contextMenu.reanalyze')}</span>
               </button>
             )}
 
@@ -197,7 +199,7 @@ export function ActionContextMenu({ paper, children, onDelete, onToggleSpam, onA
               className="w-full px-3 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 transition-colors"
             >
               <ExternalLink className="w-4 h-4" />
-              <span>Open in ArXiv</span>
+              <span>{t('papers.contextMenu.openInArxiv')}</span>
             </button>
 
             {/* Open PDF */}
@@ -206,7 +208,7 @@ export function ActionContextMenu({ paper, children, onDelete, onToggleSpam, onA
               className="w-full px-3 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 transition-colors"
             >
               <FileText className="w-4 h-4" />
-              <span>Open PDF</span>
+              <span>{t('papers.contextMenu.openPdf')}</span>
             </button>
 
             <div className="my-1 border-t border-gray-200 dark:border-gray-700" />
@@ -218,7 +220,7 @@ export function ActionContextMenu({ paper, children, onDelete, onToggleSpam, onA
                 className="w-full px-3 py-2 text-left text-sm text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20 flex items-center gap-2 transition-colors"
               >
                 <Ban className="w-4 h-4" />
-                <span>Mark as spam</span>
+                <span>{t('papers.contextMenu.markAsSpam')}</span>
               </button>
             )}
 
@@ -229,7 +231,7 @@ export function ActionContextMenu({ paper, children, onDelete, onToggleSpam, onA
                 className="w-full px-3 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2 transition-colors"
               >
                 <Trash2 className="w-4 h-4" />
-                <span>Delete</span>
+                <span>{t('papers.contextMenu.delete')}</span>
               </button>
             )}
           </div>,

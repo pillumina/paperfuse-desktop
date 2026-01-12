@@ -99,14 +99,14 @@ export default function SpamPage({ viewMode }: SpamPageProps) {
   const handleRestoreAll = async () => {
     setModal({
       isOpen: true,
-      title: '恢复全部论文',
-      message: `确定要恢复所有 ${papers.length} 篇论文吗？它们将重新出现在主列表中。`,
+      title: t('spam.restoreAllTitle'),
+      message: t('spam.restoreAllMessage', { count: papers.length }),
       variant: 'warning',
       onConfirm: async () => {
         await Promise.all(
           papers.map(paper => invoke('toggle_paper_spam', { id: paper.id, isSpam: false }))
         );
-        setToast({ message: `已恢复 ${papers.length} 篇论文`, type: 'success' });
+        setToast({ message: t('spam.restoredCount', { count: papers.length }), type: 'success' });
         await loadSpamPapers();
       },
     });
@@ -115,12 +115,12 @@ export default function SpamPage({ viewMode }: SpamPageProps) {
   const handleDelete = async (id: string) => {
     setModal({
       isOpen: true,
-      title: '永久删除',
-      message: '确定要永久删除这篇论文吗？此操作无法撤销。',
+      title: t('spam.permanentDeleteTitle'),
+      message: t('spam.permanentDeleteMessage'),
       variant: 'danger',
       onConfirm: async () => {
         await invoke('delete_paper', { id });
-        setToast({ message: '已永久删除', type: 'success' });
+        setToast({ message: t('spam.deleted'), type: 'success' });
         await loadSpamPapers();
       },
     });
@@ -131,8 +131,8 @@ export default function SpamPage({ viewMode }: SpamPageProps) {
 
     setModal({
       isOpen: true,
-      title: '批量恢复',
-      message: `确定要恢复选中的 ${selectedPaperIds.size} 篇论文吗？`,
+      title: t('spam.batchRestoreTitle'),
+      message: t('spam.batchRestoreMessage', { count: selectedPaperIds.size }),
       variant: 'warning',
       onConfirm: async () => {
         await Promise.all(
@@ -140,7 +140,7 @@ export default function SpamPage({ viewMode }: SpamPageProps) {
             invoke('toggle_paper_spam', { id, isSpam: false })
           )
         );
-        setToast({ message: `已恢复 ${selectedPaperIds.size} 篇论文`, type: 'success' });
+        setToast({ message: t('spam.restoredCount', { count: selectedPaperIds.size }), type: 'success' });
         await loadSpamPapers();
       },
     });
@@ -151,8 +151,8 @@ export default function SpamPage({ viewMode }: SpamPageProps) {
 
     setModal({
       isOpen: true,
-      title: '批量删除',
-      message: `确定要永久删除选中的 ${selectedPaperIds.size} 篇论文吗？此操作无法撤销。`,
+      title: t('spam.batchDeleteTitle'),
+      message: t('spam.batchDeleteMessage', { count: selectedPaperIds.size }),
       variant: 'danger',
       onConfirm: async () => {
         await Promise.all(
@@ -160,7 +160,7 @@ export default function SpamPage({ viewMode }: SpamPageProps) {
             invoke('delete_paper', { id })
           )
         );
-        setToast({ message: `已删除 ${selectedPaperIds.size} 篇论文`, type: 'success' });
+        setToast({ message: t('spam.deletedCount', { count: selectedPaperIds.size }), type: 'success' });
         await loadSpamPapers();
       },
     });
@@ -171,14 +171,14 @@ export default function SpamPage({ viewMode }: SpamPageProps) {
 
     setModal({
       isOpen: true,
-      title: '清空垃圾箱',
-      message: `确定要永久删除所有 ${papers.length} 篇垃圾论文吗？此操作无法撤销。`,
+      title: t('spam.clearAllTitle'),
+      message: t('spam.clearAllMessage', { count: papers.length }),
       variant: 'danger',
       onConfirm: async () => {
         await Promise.all(
           papers.map(paper => invoke('delete_paper', { id: paper.id }))
         );
-        setToast({ message: '已清空所有垃圾论文', type: 'success' });
+        setToast({ message: t('spam.clearedAll'), type: 'success' });
         await loadSpamPapers();
       },
     });
@@ -229,29 +229,29 @@ export default function SpamPage({ viewMode }: SpamPageProps) {
 
           {/* Normal mode buttons */}
           {!isSelectionMode && papers.length > 0 && (
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 flex-wrap">
               <button
                 onClick={() => setIsSelectionMode(true)}
-                className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors whitespace-nowrap"
               >
-                <CheckSquare className="w-4 h-4" />
-                多选模式
+                <CheckSquare className="w-3.5 h-3.5" />
+                {t('spam.selectMode')}
               </button>
 
               <button
                 onClick={handleRestoreAll}
-                className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors shadow-sm hover:shadow"
+                className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors shadow-sm hover:shadow whitespace-nowrap"
               >
-                <RotateCcw className="w-4 h-4" />
+                <RotateCcw className="w-3.5 h-3.5" />
                 {t('spam.restoreAll')}
               </button>
 
               <button
                 onClick={handleClearAll}
-                className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors whitespace-nowrap"
               >
-                <Trash2 className="w-4 h-4" />
-                清空全部
+                <Trash2 className="w-3.5 h-3.5" />
+                {t('spam.clearAll')}
               </button>
             </div>
           )}
@@ -308,7 +308,7 @@ export default function SpamPage({ viewMode }: SpamPageProps) {
               <button
                 onClick={toggleSelectAll}
                 className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                title={isAllSelected ? '取消全选' : '全选'}
+                title={isAllSelected ? t('spam.deselectAll') : t('spam.selectAll')}
               >
                 {isAllSelected ? (
                   <CheckSquare className="w-5 h-5 text-blue-600" />
@@ -317,7 +317,7 @@ export default function SpamPage({ viewMode }: SpamPageProps) {
                 )}
               </button>
               <span className="text-sm font-medium text-gray-900 dark:text-gray-100 min-w-[80px]">
-                {selectedCount > 0 ? `已选 ${selectedCount} 篇` : '未选择'}
+                {selectedCount > 0 ? t('spam.selected', { count: selectedCount }) : t('spam.noneSelected')}
               </span>
             </div>
 
@@ -329,7 +329,7 @@ export default function SpamPage({ viewMode }: SpamPageProps) {
                   className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
                 >
                   <RotateCcw className="w-4 h-4" />
-                  恢复选中
+                  {t('spam.restoreSelected')}
                 </button>
 
                 <button
@@ -337,12 +337,12 @@ export default function SpamPage({ viewMode }: SpamPageProps) {
                   className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                 >
                   <Trash2 className="w-4 h-4" />
-                  删除选中
+                  {t('spam.deleteSelected')}
                 </button>
               </>
             ) : (
               <span className="text-sm text-gray-500 dark:text-gray-400 px-2">
-                选择论文以进行批量操作
+                {t('spam.selectPapers')}
               </span>
             )}
 
@@ -357,7 +357,7 @@ export default function SpamPage({ viewMode }: SpamPageProps) {
               }}
               className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
             >
-              退出
+              {t('spam.exit')}
             </button>
           </div>
         </div>
@@ -371,8 +371,8 @@ export default function SpamPage({ viewMode }: SpamPageProps) {
         title={modal.title}
         message={modal.message}
         variant={modal.variant}
-        confirmText="确定"
-        cancelText="取消"
+        confirmText={t('common.buttons.confirm')}
+        cancelText={t('common.buttons.cancel')}
       />
 
       {/* Toast */}

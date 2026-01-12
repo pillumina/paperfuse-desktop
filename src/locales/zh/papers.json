@@ -220,7 +220,24 @@
       "analysisQuick": "快速",
       "code": "代码"
     },
-    "steps": "步骤"
+    "steps": "步骤",
+    "collections": {
+      "title": "收藏",
+      "addTo": "添加到收藏",
+      "empty": "这篇论文还没有添加到任何收藏",
+      "removeFrom": "从收藏移除"
+    }
+  },
+  "contextMenu": {
+    "copyTitle": "复制标题",
+    "copyLink": "复制链接",
+    "copyCitation": "复制引用",
+    "addToCollection": "添加到收藏",
+    "reanalyze": "重新分析",
+    "openInArxiv": "在 ArXiv 打开",
+    "openPdf": "打开 PDF",
+    "markAsSpam": "标记为垃圾",
+    "delete": "删除"
   },
   "aiSummaryBlock": {
     "title": "AI 总结",
@@ -249,7 +266,12 @@
     "selectAll": "全选",
     "deleteSelected": "删除选中",
     "addCollection": "添加到收藏",
-    "reanalyze": "重新分析"
+    "reanalyze": "重新分析",
+    "markAsSpam": "标记为垃圾",
+    "batchAnalyze": "批量分析",
+    "markAsSpamTooltip": "标记 {{count}} 篇论文为垃圾",
+    "addCollectionTooltip": "添加 {{count}} 篇论文到收藏",
+    "batchAnalyzeTooltip": "批量分析 {{count}} 篇论文"
   },
   "onboarding": {
     "welcome": "欢迎使用 PaperFuse！",
@@ -311,6 +333,18 @@
   "errors": {
     "deleteFailed": "删除论文失败",
     "batchDeleteFailed": "批量删除论文失败",
-    "deleteSuccess": "成功删除 {{count}} 篇论文"
+    "deleteSuccess": "成功删除 {{count}} 篇论文",
+    "batchSpamFailed": "批量标记失败",
+    "batchSpamSuccess": "已将 {{count}} 篇论文标记为垃圾",
+    "batchAnalysisSuccess": "成功分析 {{count}} 篇论文",
+    "batchAnalysisPartial": "分析完成：{{success}} 篇成功，{{failed}} 篇失败",
+    "batchAnalysisFailed": "批量分析失败"
+  },
+  "batchSpamDialog": {
+    "title": "标记为垃圾",
+    "message": "确定要将选中的 {{count}} 篇论文标记为垃圾吗？",
+    "info": "被标记为垃圾的论文将不会出现在主列表中，但会保留在垃圾箱中以便恢复。",
+    "confirm": "标记为垃圾",
+    "cancel": "取消"
   }
 }

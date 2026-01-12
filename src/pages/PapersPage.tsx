@@ -540,11 +540,11 @@ export default function PapersPage() {
       exitSelectionMode();
       refetch();
       // Show success toast
-      setToast({ message: `已将 ${selectedPaperIds.size} 篇论文标记为垃圾`, type: 'success' });
+      setToast({ message: t('papers.errors.batchSpamSuccess', { count: selectedPaperIds.size, plural: selectedPaperIds.size !== 1 ? 's' : '' }).replace('{{plural}}', selectedPaperIds.size !== 1 ? 's' : ''), type: 'success' });
     } catch (error) {
       console.error('[PapersPage] Batch spam failed:', error);
       setShowBatchSpamConfirm(false);
-      setToast({ message: '批量标记失败', type: 'error' });
+      setToast({ message: t('papers.errors.batchSpamFailed'), type: 'error' });
     }
   };
 
@@ -610,12 +610,12 @@ export default function PapersPage() {
       const success = total - failed;
       if (failed === 0) {
         setToast({
-          message: `成功分析 ${total} 篇论文`,
+          message: t('papers.errors.batchAnalysisSuccess', { count: total, plural: total !== 1 ? 's' : '' }).replace('{{plural}}', total !== 1 ? 's' : ''),
           type: 'success',
         });
       } else {
         setToast({
-          message: `分析完成：${success} 篇成功，${failed} 篇失败`,
+          message: t('papers.errors.batchAnalysisPartial', { success, failed }),
           type: 'error',
         });
       }
@@ -626,7 +626,7 @@ export default function PapersPage() {
         status: 'error',
       }));
       setToast({
-        message: '批量分析失败',
+        message: t('papers.errors.batchAnalysisFailed'),
         type: 'error',
       });
     }
@@ -893,16 +893,16 @@ export default function PapersPage() {
               <Tooltip content={selectedPaperIds.size === displayedPapers.length ? t('papers.tooltips.deselectAll') : t('papers.tooltips.selectAll')}>
                 <button
                   onClick={toggleSelectAll}
-                  className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 font-medium transition-colors focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 flex items-center gap-2"
+                  className="px-3 py-1.5 text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 font-medium transition-colors focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 flex items-center gap-1.5"
                 >
                   {selectedPaperIds.size === displayedPapers.length ? (
                     <>
-                      <Square className="w-4 h-4" />
+                      <Square className="w-3.5 h-3.5" />
                       {t('papers.page.deselectAll')}
                     </>
                   ) : (
                     <>
-                      <CheckSquare className="w-4 h-4" />
+                      <CheckSquare className="w-3.5 h-3.5" />
                       {t('papers.page.selectAll')}
                     </>
                   )}
@@ -912,48 +912,48 @@ export default function PapersPage() {
                 <button
                   onClick={() => setShowBatchDeleteConfirm(true)}
                   disabled={selectedPaperIds.size === 0}
-                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:ring-2 focus:ring-red-500 focus:ring-offset-2 flex items-center gap-2"
+                  className="px-3 py-1.5 text-xs bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:ring-2 focus:ring-red-500 focus:ring-offset-2 flex items-center gap-1.5"
                 >
-                  <Trash2 className="w-4 h-4" />
+                  <Trash2 className="w-3.5 h-3.5" />
                   {t('papers.page.deleteSelected', { count: selectedPaperIds.size })}
                 </button>
               </Tooltip>
-              <Tooltip content={`标记 ${selectedPaperIds.size} 篇论文为垃圾`}>
+              <Tooltip content={t('papers.toolbar.markAsSpamTooltip', { count: selectedPaperIds.size, plural: selectedPaperIds.size !== 1 ? 's' : '' }).replace('{{plural}}', selectedPaperIds.size !== 1 ? 's' : '')}>
                 <button
                   onClick={() => setShowBatchSpamConfirm(true)}
                   disabled={selectedPaperIds.size === 0}
-                  className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 flex items-center gap-2"
+                  className="px-3 py-1.5 text-xs bg-orange-600 text-white rounded-lg hover:bg-orange-700 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 flex items-center gap-1.5"
                 >
-                  <AlertOctagon className="w-4 h-4" />
-                  标记为垃圾
+                  <AlertOctagon className="w-3.5 h-3.5" />
+                  {t('papers.toolbar.markAsSpam')}
                 </button>
               </Tooltip>
-              <Tooltip content={`添加 ${selectedPaperIds.size} 篇论文到 Collection`}>
+              <Tooltip content={t('papers.toolbar.addCollectionTooltip', { count: selectedPaperIds.size, plural: selectedPaperIds.size !== 1 ? 's' : '' }).replace('{{plural}}', selectedPaperIds.size !== 1 ? 's' : '')}>
                 <button
                   onClick={() => setShowAddToCollectionDialog(true)}
                   disabled={selectedPaperIds.size === 0}
-                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 flex items-center gap-2"
+                  className="px-3 py-1.5 text-xs bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 flex items-center gap-1.5"
                 >
-                  <FolderPlus className="w-4 h-4" />
-                  添加到 Collection
+                  <FolderPlus className="w-3.5 h-3.5" />
+                  {t('papers.toolbar.addCollection')}
                 </button>
               </Tooltip>
-              <Tooltip content={`批量分析 ${selectedPaperIds.size} 篇论文`}>
+              <Tooltip content={t('papers.toolbar.batchAnalyzeTooltip', { count: selectedPaperIds.size, plural: selectedPaperIds.size !== 1 ? 's' : '' }).replace('{{plural}}', selectedPaperIds.size !== 1 ? 's' : '')}>
                 <button
                   onClick={() => setShowAnalysisDialog(true)}
                   disabled={selectedPaperIds.size === 0}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 flex items-center gap-2"
+                  className="px-3 py-1.5 text-xs bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 flex items-center gap-1.5"
                 >
-                  <Sparkles className="w-4 h-4" />
-                  批量分析
+                  <Sparkles className="w-3.5 h-3.5" />
+                  {t('papers.toolbar.batchAnalyze')}
                 </button>
               </Tooltip>
               <Tooltip content={t('papers.tooltips.exitSelection')}>
                 <button
                   onClick={exitSelectionMode}
-                  className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 font-medium transition-colors focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 flex items-center gap-2"
+                  className="px-3 py-1.5 text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 font-medium transition-colors focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 flex items-center gap-1.5"
                 >
-                  <X className="w-4 h-4" />
+                  <X className="w-3.5 h-3.5" />
                   {t('papers.page.cancelSelection')}
                 </button>
               </Tooltip>
@@ -1238,17 +1238,17 @@ export default function PapersPage() {
               </div>
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                  标记为垃圾
+                  {t('papers.batchSpamDialog.title')}
                 </h3>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  确定要将选中的 {selectedPaperIds.size} 篇论文标记为垃圾吗？
+                  {t('papers.batchSpamDialog.message', { count: selectedPaperIds.size, plural: selectedPaperIds.size !== 1 ? 's' : '' }).replace('{{plural}}', selectedPaperIds.size !== 1 ? 's' : '')}
                 </p>
               </div>
             </div>
 
             <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
               <p className="text-sm text-blue-800 dark:text-blue-300 font-medium">
-                被标记为垃圾的论文将不会出现在主列表中，但会保留在垃圾箱中以便恢复。
+                {t('papers.batchSpamDialog.info')}
               </p>
             </div>
 
@@ -1257,14 +1257,14 @@ export default function PapersPage() {
                 onClick={() => setShowBatchSpamConfirm(false)}
                 className="flex-1 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 font-medium transition-colors focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
               >
-                取消
+                {t('papers.batchSpamDialog.cancel')}
               </button>
               <button
                 onClick={handleBatchSpam}
                 className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 font-medium transition-colors focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 flex items-center justify-center gap-2"
               >
                 <AlertOctagon className="w-4 h-4" />
-                标记为垃圾
+                {t('papers.batchSpamDialog.confirm')}
               </button>
             </div>
           </div>

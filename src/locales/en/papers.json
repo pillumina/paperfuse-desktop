@@ -220,7 +220,24 @@
       "analysisQuick": "Quick",
       "code": "Code"
     },
-    "steps": "Steps"
+    "steps": "Steps",
+    "collections": {
+      "title": "Collections",
+      "addTo": "Add to Collection",
+      "empty": "This paper hasn't been added to any collection yet",
+      "removeFrom": "Remove from collection"
+    }
+  },
+  "contextMenu": {
+    "copyTitle": "Copy title",
+    "copyLink": "Copy link",
+    "copyCitation": "Copy citation",
+    "addToCollection": "Add to collection",
+    "reanalyze": "Re-analyze",
+    "openInArxiv": "Open in ArXiv",
+    "openPdf": "Open PDF",
+    "markAsSpam": "Mark as spam",
+    "delete": "Delete"
   },
   "aiSummaryBlock": {
     "title": "AI Summary",
@@ -249,7 +266,12 @@
     "selectAll": "Select All",
     "deleteSelected": "Delete Selected",
     "addCollection": "Add to Collection",
-    "reanalyze": "Reanalyze"
+    "reanalyze": "Reanalyze",
+    "markAsSpam": "Mark as Spam",
+    "batchAnalyze": "Batch Analyze",
+    "markAsSpamTooltip": "Mark {{count}} paper{{plural}} as spam",
+    "addCollectionTooltip": "Add {{count}} paper{{plural}} to collection",
+    "batchAnalyzeTooltip": "Batch analyze {{count}} paper{{plural}}"
   },
   "onboarding": {
     "welcome": "Welcome to PaperFuse!",
@@ -311,6 +333,18 @@
   "errors": {
     "deleteFailed": "Failed to delete paper",
     "batchDeleteFailed": "Failed to delete papers",
-    "deleteSuccess": "Deleted {{count}} paper{{plural}} successfully"
+    "deleteSuccess": "Deleted {{count}} paper{{plural}} successfully",
+    "batchSpamFailed": "Failed to mark papers as spam",
+    "batchSpamSuccess": "Marked {{count}} paper{{plural}} as spam",
+    "batchAnalysisSuccess": "Successfully analyzed {{count}} paper{{plural}}",
+    "batchAnalysisPartial": "Analysis completed: {{success}} succeeded, {{failed}} failed",
+    "batchAnalysisFailed": "Batch analysis failed"
+  },
+  "batchSpamDialog": {
+    "title": "Mark as Spam",
+    "message": "Are you sure you want to mark {{count}} selected paper{{plural}} as spam?",
+    "info": "Papers marked as spam will not appear in the main list but will be kept in the spam folder for recovery.",
+    "confirm": "Mark as Spam",
+    "cancel": "Cancel"
   }
 }

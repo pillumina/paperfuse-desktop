@@ -24,6 +24,8 @@
 - **Advanced Search & Filter** - Full-text search with filters by date, score, tags, and topics
 - **Spam Management** - Mark irrelevant papers as spam to train the filter
 - **Multiple View Modes** - Choose between list and grid view for browsing papers
+- **Batch Operations** - Select multiple papers for batch delete, spam marking, or re-analysis
+- **Quick Re-analyze** - One-click re-analysis directly from paper cards
 
 ### 🤖 AI-Powered Analysis
 - **Intelligent Classification** - Automatically categorize papers by research topics
@@ -31,7 +33,14 @@
 - **Key Insights Extraction** - Get concise summaries of main contributions
 - **Algorithm Flowcharts** - Visual representation of algorithms in Mermaid diagrams
 - **Technical Details** - Extracted formulas, algorithms, and code availability
+- **Complexity Analysis** - Time and space complexity with LaTeX math rendering
 - **Multi-LLM Support** - Works with GLM (ZhipuAI) and Claude (Anthropic)
+- **Analysis Modes** - Choose between standard (quick) or full (comprehensive) analysis
+
+### 🌐 Internationalization
+- **Bilingual Interface** - Full support for English and Chinese (简体中文)
+- **Language Selection** - Choose analysis output language independently of UI language
+- **Complete Translation** - All UI elements, dialogs, and messages are localized
 
 ### 🎨 User Experience
 - **Native macOS Look & Feel** - Built with Tauri for a truly native experience
@@ -39,6 +48,7 @@
 - **Keyboard Shortcuts** - Power-user friendly keyboard navigation
 - **Responsive Design** - Clean interface with smooth animations
 - **Local Storage** - All data stored locally on your Mac (SQLite)
+- **Hover Previews** - Quick preview of paper details on hover
 
 ### ⏰ Automation
 - **Scheduled Fetches** - Set up automatic daily or weekly paper fetches
@@ -103,7 +113,11 @@ Go to **Settings** > **API** and add your LLM provider API key:
 - **GLM (智谱 AI)**: Get your API key from [https://open.bigmodel.cn/](https://open.bigmodel.cn/)
 - **Claude (Anthropic)**: Get your API key from [https://console.anthropic.com/](https://console.anthropic.com/)
 
-### 2. Add Research Topics
+### 2. Choose Language
+
+Go to **Settings** > **General** to select your preferred UI language (English or Chinese).
+
+### 3. Add Research Topics
 
 1. Go to **Settings** > **Topics**
 2. Click **"Add Topic"**
@@ -112,25 +126,30 @@ Go to **Settings** > **API** and add your LLM provider API key:
    - Examples: `cs.AI`, `cs.LG`, `cs.CV`, `stat.ML`
 5. Save
 
-### 3. Fetch Papers
+### 4. Fetch Papers
 
 1. Click **"Fetch Papers"** on the home page
 2. Select topics to fetch from
-3. Wait for papers to be fetched and analyzed
-4. Browse results in list or grid view
+3. Choose analysis mode:
+   - **Standard**: Quick analysis of introduction and conclusion
+   - **Full**: Comprehensive analysis including algorithms, complexity, and flowcharts
+4. Wait for papers to be fetched and analyzed
+5. Browse results in list or grid view
 
-### 4. Organize & Read
+### 5. Organize & Read
 
 - **Create Collections** to group related papers
 - **Read AI summaries** and key insights
 - **View algorithm flowcharts** for technical understanding
 - **Filter by score, date, or topics**
+- **Use batch operations** to manage multiple papers at once
 
 ## ⌨️ Keyboard Shortcuts
 
 | Shortcut | Action |
 |----------|--------|
 | `Cmd+K` | Open keyboard shortcuts help |
+| `Cmd+L` | Switch language (English/中文) |
 | `Cmd+N` | Start new fetch |
 | `Cmd+,` | Open settings |
 | `Cmd+1` | Navigate to Home |
@@ -138,7 +157,9 @@ Go to **Settings** > **API** and add your LLM provider API key:
 | `Cmd+3` | Navigate to Collections |
 | `Cmd+4` | Navigate to Settings |
 | `Cmd+5` | Navigate to Spam |
+| `/` | Focus search box |
 | `Space` | Select/Deselect paper (in selection mode) |
+| `Shift+Click` | Select range of papers |
 | `Escape` | Close dialog or cancel selection |
 
 ## 🏗️ Project Structure
@@ -148,13 +169,14 @@ paperfuse-desktop/
 ├── src/                          # Frontend (React 19 + TypeScript + Vite)
 │   ├── components/               # React components
 │   │   ├── collections/          # Collection management
-│   │   ├── common/              # Shared components (MermaidRenderer, etc.)
+│   │   ├── common/              # Shared components (MermaidRenderer, LaTeXRenderer, etc.)
 │   │   ├── fetch/               # Fetch dialog and progress
-│   │   ├── papers/              # Paper cards and lists
+│   │   ├── papers/              # Paper cards, lists, and actions
 │   │   ├── settings/            # Settings pages
 │   │   └── ui/                  # Reusable UI components
-│   ├── contexts/                 # React contexts (Theme, Language, etc.)
+│   ├── contexts/                 # React contexts (Theme, Language, Keyboard, etc.)
 │   ├── hooks/                    # Custom React hooks
+│   ├── locales/                  # Internationalization (en, zh)
 │   ├── pages/                    # Page components
 │   ├── lib/                      # Utility functions and types
 │   └── styles/                   # Global styles
@@ -165,6 +187,8 @@ paperfuse-desktop/
 │   │   ├── database/            # Database layer (SQLite)
 │   │   ├── fetch.rs             # Fetch pipeline orchestration
 │   │   ├── llm/                 # LLM client (GLM, Claude)
+│   │   ├── latex_parser.rs      # LaTeX parsing for math and algorithms
+│   │   ├── retry/               # Retry logic with exponential backoff
 │   │   ├── scheduler/           # Scheduled fetch logic
 │   │   └── types.rs             # Shared types
 │   ├── migrations/               # Database migrations
@@ -228,11 +252,9 @@ npm run tauri build
 ### Code Quality
 
 ```bash
-# Type check
-npm run tsc
-
-# Lint (if configured)
-npm run lint
+# Type check (not available in current config)
+# Use build instead for type checking
+npm run build
 ```
 
 ## 🔄 CI/CD
@@ -286,6 +308,7 @@ The app uses SQLite with the following main tables:
 - Verify your API key has available quota
 - Some papers may not have full text available for analysis
 - Check the console for detailed LLM response errors
+- Try re-analyzing with a different mode or language
 
 ## 🗺️ Roadmap
 
@@ -296,9 +319,9 @@ The app uses SQLite with the following main tables:
 - [ ] Advanced search with boolean operators
 - [ ] Citation graph and related papers
 - [ ] Custom AI prompts for analysis
-- [ ] Multi-language support
 - [ ] Cloud sync for collections
 - [ ] Plugins system
+- [ ] Additional language support
 
 ### Under Consideration
 
@@ -326,6 +349,7 @@ Contributions are welcome! Please feel free to submit issues and pull requests.
 - Use TypeScript strict mode
 - Write tests for new features
 - Update documentation as needed
+- Ensure i18n keys are added for any new UI text
 
 ## 📄 License
 
@@ -340,6 +364,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [Tailwind CSS](https://tailwindcss.com/) - Utility-first CSS framework
 - [Mermaid](https://mermaid.js.org/) - Diagram generation
 - [KaTeX](https://katex.org/) - Fast web-ready LaTeX math rendering
+- [GLM (ZhipuAI)](https://open.bigmodel.cn/) - AI model provider
+- [Anthropic Claude](https://console.anthropic.com/) - AI model provider
 
 ## 📮 Contact
 

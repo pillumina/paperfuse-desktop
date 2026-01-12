@@ -259,6 +259,12 @@
     "clearShortcut": "Press Esc to clear search",
     "navigateShortcut": "Use ← → to navigate pages"
   },
+  "viewToggle": {
+    "list": "List",
+    "grid": "Grid",
+    "listView": "List view",
+    "gridView": "Grid view"
+  },
   "toolbar": {
     "fetchPapers": "Fetch Papers",
     "selectPapers": "Select Papers",

@@ -1,4 +1,5 @@
 import { List, LayoutGrid } from 'lucide-react';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 interface ViewToggleProps {
   viewMode: 'list' | 'grid';
@@ -6,6 +7,8 @@ interface ViewToggleProps {
 }
 
 export function ViewToggle({ viewMode, onViewChange }: ViewToggleProps) {
+  const { t } = useLanguage();
+
   return (
     <div className="inline-flex rounded-lg border border-gray-300 dark:border-gray-600 p-1 bg-white dark:bg-gray-800">
       <button
@@ -15,10 +18,10 @@ export function ViewToggle({ viewMode, onViewChange }: ViewToggleProps) {
             ? 'bg-blue-600 text-white'
             : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
         }`}
-        title="List view"
+        title={t('papers.viewToggle.listView')}
       >
         <List className="w-4 h-4" />
-        <span className="text-sm font-medium">List</span>
+        <span className="text-sm font-medium">{t('papers.viewToggle.list')}</span>
       </button>
       <button
         onClick={() => onViewChange('grid')}
@@ -27,10 +30,10 @@ export function ViewToggle({ viewMode, onViewChange }: ViewToggleProps) {
             ? 'bg-blue-600 text-white'
             : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
         }`}
-        title="Grid view"
+        title={t('papers.viewToggle.gridView')}
       >
         <LayoutGrid className="w-4 h-4" />
-        <span className="text-sm font-medium">Grid</span>
+        <span className="text-sm font-medium">{t('papers.viewToggle.grid')}</span>
       </button>
     </div>
   );

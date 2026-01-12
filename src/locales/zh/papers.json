@@ -259,6 +259,12 @@
     "clearShortcut": "按 Esc 清除搜索",
     "navigateShortcut": "使用 ← → 翻页"
   },
+  "viewToggle": {
+    "list": "列表",
+    "grid": "网格",
+    "listView": "列表视图",
+    "gridView": "网格视图"
+  },
   "toolbar": {
     "fetchPapers": "获取论文",
     "selectPapers": "选择论文",

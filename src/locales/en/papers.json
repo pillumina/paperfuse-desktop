@@ -115,6 +115,8 @@
     "arxiv": "ArXiv",
     "pdf": "PDF",
     "codeAvailable": "Code Available",
+    "inCollection": "In Collection",
+    "inCollectionTooltip": "This paper is in a collection",
     "analysis": {
       "deep": "Deep",
       "quick": "Quick",

@@ -1,4 +1,4 @@
-import { Tag, Sparkles, Trash2, MoreVertical, Code2, CheckSquare, Square } from 'lucide-react';
+import { Tag, Sparkles, Trash2, MoreVertical, Code2, CheckSquare, Square, Star } from 'lucide-react';
 import type { Paper, TopicConfig } from '../../lib/types';
 import { PaperMetadata } from './PaperMetadata';
 import { PaperTags } from './PaperTags';
@@ -6,6 +6,8 @@ import { HoverPreviewTooltip } from './HoverPreviewTooltip';
 import { ActionContextMenu } from './ActionContextMenu';
 import { AnalysisModeDialog, type AnalysisMode, type AnalysisLanguage } from './AnalysisModeDialog';
 import { getScoreColor } from '../../lib/utils';
+import { useLanguage } from '../../contexts/LanguageContext';
+import { usePaperCollections } from '../../hooks/useCollections';
 import { useState, useMemo } from 'react';
 
 interface PaperCardProps {
@@ -31,8 +33,13 @@ export function PaperCard({
   onToggleSelection,
   topics = []
 }: PaperCardProps) {
+  const { t } = useLanguage();
+  const { data: paperCollections } = usePaperCollections(paper.id);
   const [showActions, setShowActions] = useState(false);
   const [showAnalysisDialog, setShowAnalysisDialog] = useState(false);
+
+  // Check if paper is in any collection
+  const isInAnyCollection = paperCollections && paperCollections.length > 0;
 
   // Local helper to find topic label by key
   const getTopicLabel = useMemo(() => {
@@ -192,6 +199,13 @@ export function PaperCard({
                   <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400">
                     <Code2 className="w-3 h-3" />
                     <span>Code</span>
+                  </div>
+                )}
+                {/* Collection Indicator Badge */}
+                {isInAnyCollection && (
+                  <div className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400" title={t('papers.card.inCollectionTooltip')}>
+                    <Star className="w-3.5 h-3.5 fill-amber-500 text-amber-500 dark:fill-amber-400 dark:text-amber-400" />
+                    <span>{t('papers.card.inCollection')}</span>
                   </div>
                 )}
                 {/* Topics Badges */}

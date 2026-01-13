@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { ChevronDown, ChevronRight, CheckSquare, Square } from 'lucide-react';
+import { ChevronDown, ChevronRight, CheckSquare, Square, Star } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import type { Paper, TopicConfig } from '../../lib/types';
 import { PaperMetadata } from './PaperMetadata';
@@ -8,6 +8,8 @@ import { PaperActions } from './PaperActions';
 import { HoverPreviewTooltip } from './HoverPreviewTooltip';
 import { ActionContextMenu } from './ActionContextMenu';
 import type { AnalysisMode, AnalysisLanguage } from './AnalysisModeDialog';
+import { useLanguage } from '../../contexts/LanguageContext';
+import { usePaperCollections } from '../../hooks/useCollections';
 
 interface PaperListItemProps {
   paper: Paper;
@@ -31,7 +33,12 @@ export function PaperListItem({
   topics = []
 }: PaperListItemProps) {
   const navigate = useNavigate();
+  const { t } = useLanguage();
+  const { data: paperCollections } = usePaperCollections(paper.id);
   const [isExpanded, setIsExpanded] = useState(false);
+
+  // Check if paper is in any collection
+  const isInAnyCollection = paperCollections && paperCollections.length > 0;
 
   // Local helper to find topic label by key
   const getTopicLabel = useMemo(() => {
@@ -106,10 +113,18 @@ export function PaperListItem({
 
         {/* Title and Metadata */}
         <div className="flex-1 min-w-0">
-          {/* Title */}
-          <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-1 line-clamp-2">
-            {paper.title}
-          </h3>
+          {/* Title and Collection Indicator */}
+          <div className="flex items-center gap-2 mb-1">
+            <h3 className="text-base font-semibold text-gray-900 dark:text-white line-clamp-2 flex-1">
+              {paper.title}
+            </h3>
+            {/* Collection Indicator Badge */}
+            {isInAnyCollection && (
+              <div className="flex-shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400" title={t('papers.card.inCollectionTooltip')}>
+                <Star className="w-3 h-3 fill-amber-500 text-amber-500 dark:fill-amber-400 dark:text-amber-400" />
+              </div>
+            )}
+          </div>
 
           {/* Metadata */}
           <PaperMetadata paper={paper} showScore />

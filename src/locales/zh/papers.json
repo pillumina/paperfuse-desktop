@@ -115,6 +115,8 @@
     "arxiv": "ArXiv",
     "pdf": "PDF",
     "codeAvailable": "代码可用",
+    "inCollection": "已收藏",
+    "inCollectionTooltip": "此论文已添加到收藏",
     "analysis": {
       "deep": "深度",
       "quick": "快速",

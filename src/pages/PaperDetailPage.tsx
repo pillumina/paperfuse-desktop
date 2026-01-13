@@ -7,6 +7,7 @@ import { PaperMetadata } from '../components/papers/PaperMetadata';
 import { PaperTags } from '../components/papers/PaperTags';
 import { AuthorsList } from '../components/papers/AuthorsList';
 import { AISummarySection } from '../components/papers/AISummarySection';
+import { PDFViewerDialog } from '../components/papers/PDFViewerDialog';
 import { MermaidRenderer, LaTeXRenderer, RichTextRenderer } from '../components/common';
 import { AddToCollectionDialog } from '../components/collections/AddToCollectionDialog';
 import { getTopicColor, getTopicLabel } from '../lib/topics';
@@ -20,6 +21,7 @@ export default function PaperDetailPage() {
   const [copiedType, setCopiedType] = useState<'link' | 'title' | 'citation' | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showAddToCollectionDialog, setShowAddToCollectionDialog] = useState(false);
+  const [showPDFViewer, setShowPDFViewer] = useState(false);
 
   // Fetch paper collections
   const { data: paperCollections } = usePaperCollections(id || '');
@@ -91,10 +93,8 @@ export default function PaperDetailPage() {
     }
   };
 
-  const handleOpenPDF = async () => {
-    if (paper) {
-      await openUrl(paper.pdf_url);
-    }
+  const handleOpenPDF = () => {
+    setShowPDFViewer(true);
   };
 
   const handleCopyLink = async () => {
@@ -788,6 +788,14 @@ export default function PaperDetailPage() {
         isOpen={showAddToCollectionDialog}
         onClose={() => setShowAddToCollectionDialog(false)}
         paperId={id}
+      />
+
+      {/* PDF Viewer Dialog */}
+      <PDFViewerDialog
+        isOpen={showPDFViewer}
+        onClose={() => setShowPDFViewer(false)}
+        paperId={id || ''}
+        paperTitle={paper?.title || ''}
       />
     </>
   );

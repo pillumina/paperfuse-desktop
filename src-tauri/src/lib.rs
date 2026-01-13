@@ -27,6 +27,7 @@ pub use commands::{
     get_papers, get_paper_by_id, search_papers, get_papers_by_tag,
     get_paper_count, save_paper, delete_paper, batch_delete_papers, get_tags_with_counts,
     get_spam_papers, get_spam_paper_count, toggle_paper_spam,
+    download_paper_pdf, get_pdf_path, open_local_file,
     analyze_paper, batch_analyze_papers,
     get_settings, save_settings, get_setting, set_setting,
     get_cache_stats, clear_cache,
@@ -51,6 +52,7 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_shell::init())
+        .plugin(tauri_plugin_fs::init())
         .setup(|app| {
             // Initialize database synchronously for setup
             let rt = tokio::runtime::Runtime::new().expect("Failed to create runtime");
@@ -92,6 +94,10 @@ pub fn run() {
             delete_paper,
             batch_delete_papers,
             get_tags_with_counts,
+            // PDF commands
+            download_paper_pdf,
+            get_pdf_path,
+            open_local_file,
             // Spam/Archive commands
             get_spam_papers,
             get_spam_paper_count,

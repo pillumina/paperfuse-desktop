@@ -226,3 +226,175 @@ pub async fn toggle_paper_spam(
         .await
         .map_err(|e| e.to_string())
 }
+
+/// Download PDF for a paper to local storage
+#[tauri::command]
+pub async fn download_paper_pdf(
+    pool: State<'_, SqlitePool>,
+    paper_id: String,
+) -> Result<String, String> {
+    eprintln!("[download_paper_pdf] ========== Starting PDF download ==========");
+    eprintln!("[download_paper_pdf] Paper ID: {}", paper_id);
+
+    let repo = crate::database::PaperRepository::new(pool.inner());
+    let paper = repo.get_by_id(&paper_id).await
+        .map_err(|e| {
+            eprintln!("[download_paper_pdf] ERROR: Failed to get paper: {}", e);
+            e.to_string()
+        })?;
+
+    eprintln!("[download_paper_pdf] Paper found: {}", paper.title);
+    eprintln!("[download_paper_pdf] ArXiv URL: {}", paper.arxiv_url);
+
+    // Get PDF download path from settings
+    let settings_repo = crate::database::SettingsRepository::new(pool.inner());
+    let settings = settings_repo.get_all().await
+        .map_err(|e| {
+            eprintln!("[download_paper_pdf] ERROR: Failed to get settings: {}", e);
+            e.to_string()
+        })?;
+
+    eprintln!("[download_paper_pdf] Settings loaded, checking pdf_download_path...");
+    eprintln!("[download_paper_pdf] pdf_download_path value: {:?}", settings.pdf_download_path);
+
+    // Use configured path or default to ~/Documents/PaperFuse/pdfs
+    let pdf_download_path = settings.pdf_download_path.unwrap_or_else(|| {
+        eprintln!("[download_paper_pdf] Using default PDF path");
+        "~/Documents/PaperFuse/pdfs".to_string()
+    });
+
+    eprintln!("[download_paper_pdf] PDF download path: {}", pdf_download_path);
+
+    // Expand ~ to home directory
+    let expanded_path = if pdf_download_path.starts_with("~/") {
+        eprintln!("[download_paper_pdf] Path starts with ~, expanding...");
+        if let Some(home) = dirs::home_dir() {
+            let home_str = home.display().to_string();
+            let expanded = home.join(&pdf_download_path[2..]);
+            eprintln!("[download_paper_pdf] Home directory: {}", home_str);
+            eprintln!("[download_paper_pdf] Expanded path: {}", expanded.display());
+            expanded
+        } else {
+            eprintln!("[download_paper_pdf] WARNING: Could not get home directory, using original path");
+            std::path::PathBuf::from(&pdf_download_path)
+        }
+    } else {
+        eprintln!("[download_paper_pdf] Path does not start with ~");
+        std::path::PathBuf::from(&pdf_download_path)
+    };
+
+    eprintln!("[download_paper_pdf] Final download path: {}", expanded_path.display());
+
+    // Build ArxivEntry from Paper
+    let entry = crate::arxiv::ArxivEntry {
+        id: paper.arxiv_url.clone(),
+        title: paper.title.clone(),
+        summary: paper.summary.clone().unwrap_or_default(),
+        published: paper.published_date.clone(),
+        updated: paper.updated_at.clone(),
+        links: vec![],
+        authors: paper.authors.clone().into_iter().map(|a| crate::arxiv::ArxivAuthor {
+            name: a.name,
+            affiliation: a.affiliation,
+        }).collect(),
+        categories: paper.tags.clone().into_iter().map(|t| crate::arxiv::ArxivCategory { term: t }).collect(),
+    };
+
+    eprintln!("[download_paper_pdf] ArxivEntry created, calling download_pdf...");
+    eprintln!("[download_paper_pdf] PDF URL would be: {}", entry.get_pdf_url());
+
+    // Download PDF
+    let pdf_path = entry.download_pdf(&expanded_path).await
+        .map_err(|e| {
+            eprintln!("[download_paper_pdf] ERROR: download_pdf failed: {}", e);
+            e.to_string()
+        })?;
+
+    eprintln!("[download_paper_pdf] PDF downloaded successfully to: {}", pdf_path);
+
+    // Update paper record with local path
+    let mut updated_paper = paper;
+    updated_paper.pdf_local_path = Some(pdf_path.clone());
+    updated_paper.touch();
+
+    repo.save(&updated_paper).await
+        .map_err(|e| {
+            eprintln!("[download_paper_pdf] ERROR: Failed to save paper: {}", e);
+            e.to_string()
+        })?;
+
+    eprintln!("[download_paper_pdf] ========== PDF download complete ==========");
+    Ok(pdf_path)
+}
+
+/// Get local PDF path for a paper (if downloaded)
+#[tauri::command]
+pub async fn get_pdf_path(
+    pool: State<'_, SqlitePool>,
+    paper_id: String,
+) -> Result<Option<String>, String> {
+    eprintln!("[get_pdf_path] ========== Getting PDF path ==========");
+    eprintln!("[get_pdf_path] Paper ID: {}", paper_id);
+
+    let repo = crate::database::PaperRepository::new(pool.inner());
+    let paper = repo.get_by_id(&paper_id).await
+        .map_err(|e| {
+            eprintln!("[get_pdf_path] ERROR: Failed to get paper: {}", e);
+            e.to_string()
+        })?;
+
+    eprintln!("[get_pdf_path] Paper found: {}", paper.title);
+    eprintln!("[get_pdf_path] pdf_local_path: {:?}", paper.pdf_local_path);
+
+    // Verify file still exists
+    if let Some(ref local_path) = paper.pdf_local_path {
+        eprintln!("[get_pdf_path] Checking if file exists: {}", local_path);
+        let path = std::path::Path::new(local_path);
+        if path.exists() {
+            eprintln!("[get_pdf_path] File exists, returning path: {}", local_path);
+            eprintln!("[get_pdf_path] ========== PDF path found ==========");
+            Ok(Some(local_path.clone()))
+        } else {
+            eprintln!("[get_pdf_path] File does not exist, clearing from database");
+            // File no longer exists, clear the path
+            let mut updated_paper = paper;
+            updated_paper.pdf_local_path = None;
+            updated_paper.touch();
+            repo.save(&updated_paper).await
+                .map_err(|e| {
+                    eprintln!("[get_pdf_path] ERROR: Failed to update paper: {}", e);
+                    e.to_string()
+                })?;
+            eprintln!("[get_pdf_path] ========== PDF path cleared ==========");
+            Ok(None)
+        }
+    } else {
+        eprintln!("[get_pdf_path] No pdf_local_path in database");
+        eprintln!("[get_pdf_path] ========== No PDF path ==========");
+        Ok(None)
+    }
+}
+
+/// Open a local file with the system's default application
+#[tauri::command]
+pub async fn open_local_file(path: String) -> Result<(), String> {
+    eprintln!("[open_local_file] Opening file: {}", path);
+
+    // Check if file exists
+    if !std::path::Path::new(&path).exists() {
+        let error = format!("File not found: {}", path);
+        eprintln!("[open_local_file] ERROR: {}", error);
+        return Err(error);
+    }
+
+    // Use the open crate to open the file with system default
+    open::that(&path)
+        .map_err(|e| {
+            let error = format!("Failed to open file: {}", e);
+            eprintln!("[open_local_file] ERROR: {}", error);
+            error
+        })?;
+
+    eprintln!("[open_local_file] Successfully opened file");
+    Ok(())
+}

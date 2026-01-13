@@ -153,6 +153,7 @@ export interface Settings {
   scheduleWeekDays?: number[]; // 0-6 for Sunday-Saturday
   arxivCategories?: string[];
   latexDownloadPath?: string;
+  pdfDownloadPath?: string;
 
   // Deep Analysis V2 setting
   deepAnalysisMode?: 'standard' | 'full';

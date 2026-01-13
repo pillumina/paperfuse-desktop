@@ -82,8 +82,8 @@ impl PaperRepository {
                 effectiveness_score, effectiveness_reason,
                 experiment_completeness_score, experiment_completeness_reason,
                 algorithm_flowchart, time_complexity, space_complexity,
-                analysis_mode, analysis_incomplete
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                analysis_mode, analysis_incomplete, pdf_local_path
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(id) DO NOTHING
             "#
         )
@@ -120,6 +120,7 @@ impl PaperRepository {
         .bind(&paper.space_complexity)
         .bind(&paper.analysis_mode)
         .bind(paper.analysis_incomplete)
+        .bind(&paper.pdf_local_path)
         .execute(&self.pool)
         .await?;
 
@@ -170,8 +171,8 @@ impl PaperRepository {
                 effectiveness_score, effectiveness_reason,
                 experiment_completeness_score, experiment_completeness_reason,
                 algorithm_flowchart, time_complexity, space_complexity,
-                analysis_mode, analysis_incomplete
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                analysis_mode, analysis_incomplete, pdf_local_path
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(id) DO UPDATE SET
                 arxiv_id = excluded.arxiv_id,
                 title = excluded.title,
@@ -199,7 +200,8 @@ impl PaperRepository {
                 time_complexity = excluded.time_complexity,
                 space_complexity = excluded.space_complexity,
                 analysis_mode = excluded.analysis_mode,
-                analysis_incomplete = excluded.analysis_incomplete
+                analysis_incomplete = excluded.analysis_incomplete,
+                pdf_local_path = excluded.pdf_local_path
             "#
         )
         .bind(&paper.id)
@@ -235,6 +237,7 @@ impl PaperRepository {
         .bind(&paper.space_complexity)
         .bind(&paper.analysis_mode)
         .bind(paper.analysis_incomplete)
+        .bind(&paper.pdf_local_path)
         .execute(&self.pool)
         .await;
 
@@ -506,6 +509,7 @@ impl PaperRepository {
         let space_complexity: Option<String> = get_opt_string(&row, "space_complexity");
         let analysis_mode: Option<String> = get_opt_string(&row, "analysis_mode");
         let analysis_incomplete: bool = get_bool_default(&row, "analysis_incomplete", false);
+        let pdf_local_path: Option<String> = get_opt_string(&row, "pdf_local_path");
 
         Ok(Paper {
             id: row.get("id"),
@@ -544,6 +548,7 @@ impl PaperRepository {
             space_complexity,
             analysis_mode,
             analysis_incomplete,
+            pdf_local_path,
         })
     }
 }

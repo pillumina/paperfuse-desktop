@@ -357,5 +357,19 @@
     "info": "被标记为垃圾的论文将不会出现在主列表中，但会保留在垃圾箱中以便恢复。",
     "confirm": "标记为垃圾",
     "cancel": "取消"
+  },
+  "pdfViewer": {
+    "title": "PDF 查看器",
+    "download": "下载 PDF",
+    "downloading": "下载中...",
+    "loading": "加载 PDF 中...",
+    "notDownloaded": "PDF 尚未下载",
+    "loadError": "PDF 加载失败",
+    "downloadError": "PDF 下载失败",
+    "pageOf": "第 {{current}} / {{total}} 页",
+    "previousPage": "上一页",
+    "nextPage": "下一页",
+    "zoomIn": "放大",
+    "zoomOut": "缩小"
   }
 }

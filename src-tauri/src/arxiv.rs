@@ -521,6 +521,96 @@ fn find_main_tex_file(dir: &Path) -> Option<String> {
     None
 }
 
+impl ArxivEntry {
+    /// Download PDF for this paper to a directory
+    /// Returns the path to the downloaded PDF file
+    /// If the PDF already exists locally, skips downloading and uses cached version
+    pub async fn download_pdf(&self, download_dir: &Path) -> Result<String, ArxivError> {
+        use std::fs;
+        use std::io::Write;
+
+        eprintln!("[download_pdf] ========== Starting PDF download ==========");
+
+        let arxiv_id = self.get_arxiv_id();
+        let pdf_filename = format!("{}.pdf", arxiv_id);
+        let pdf_path = download_dir.join(&pdf_filename);
+
+        eprintln!("[download_pdf] ArXiv ID: {}", arxiv_id);
+        eprintln!("[download_pdf] Download directory: {}", download_dir.display());
+        eprintln!("[download_pdf] Expected PDF path: {}", pdf_path.display());
+
+        // Check if PDF already exists locally
+        if pdf_path.exists() {
+            eprintln!("[download_pdf] PDF already exists at: {}", pdf_path.display());
+            eprintln!("[download_pdf] ========== Using cached PDF ==========");
+            return Ok(pdf_path.to_string_lossy().to_string());
+        }
+
+        eprintln!("[download_pdf] PDF not cached, downloading from ArXiv...");
+
+        // Cache miss - download from ArXiv
+        let pdf_url = self.get_pdf_url();
+        eprintln!("[download_pdf] PDF URL: {}", pdf_url);
+
+        eprintln!("[download_pdf] Creating HTTP client...");
+        let client = reqwest::Client::builder()
+            .user_agent("PaperFuse/0.1 (https://github.com/paperfuse)")
+            .build()
+            .map_err(|e| {
+                eprintln!("[download_pdf] ERROR: Failed to create HTTP client: {}", e);
+                e
+            })?;
+
+        eprintln!("[download_pdf] Starting HTTP GET request...");
+        let response = client.get(&pdf_url).send().await.map_err(|e| {
+            eprintln!("[download_pdf] ERROR: HTTP request failed: {}", e);
+            e
+        })?;
+
+        eprintln!("[download_pdf] HTTP response status: {}", response.status());
+        eprintln!("[download_pdf] HTTP response headers: {:?}", response.headers());
+
+        if !response.status().is_success() {
+            let error = format!("HTTP error: {}", response.status());
+            eprintln!("[download_pdf] ERROR: {}", error);
+            return Err(ArxivError::ParseError(error));
+        }
+
+        eprintln!("[download_pdf] Reading response body...");
+        let bytes = response.bytes().await.map_err(|e| {
+            eprintln!("[download_pdf] ERROR: Failed to read response body: {}", e);
+            e
+        })?;
+
+        eprintln!("[download_pdf] Downloaded {} bytes", bytes.len());
+
+        // Create download directory if it doesn't exist
+        eprintln!("[download_pdf] Creating download directory: {}", download_dir.display());
+        fs::create_dir_all(download_dir).map_err(|e| {
+            eprintln!("[download_pdf] ERROR: Failed to create download directory: {}", e);
+            ArxivError::LatexDownloadError(format!("Failed to create download directory: {}", e))
+        })?;
+
+        // Save PDF to disk
+        eprintln!("[download_pdf] Creating PDF file: {}", pdf_path.display());
+        let mut file = fs::File::create(&pdf_path).map_err(|e| {
+            eprintln!("[download_pdf] ERROR: Failed to create PDF file: {}", e);
+            ArxivError::LatexDownloadError(format!("Failed to create PDF file: {}", e))
+        })?;
+
+        eprintln!("[download_pdf] Writing {} bytes to file...", bytes.len());
+        file.write_all(&bytes).map_err(|e| {
+            eprintln!("[download_pdf] ERROR: Failed to write PDF file: {}", e);
+            ArxivError::LatexDownloadError(format!("Failed to write PDF file: {}", e))
+        })?;
+
+        eprintln!("[download_pdf] Successfully downloaded PDF to: {}", pdf_path.display());
+        eprintln!("[download_pdf] ========== PDF download complete ==========");
+
+        Ok(pdf_path.to_string_lossy().to_string())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -45,6 +45,7 @@ pub struct Paper {
     pub space_complexity: Option<String>,
     pub analysis_mode: Option<String>,      // 'standard' or 'full'
     pub analysis_incomplete: bool,          // LaTeX download failed
+    pub pdf_local_path: Option<String>,     // Local path to downloaded PDF
 }
 
 /// Key formula from a paper
@@ -123,6 +124,7 @@ impl Paper {
             space_complexity: None,
             analysis_mode: None,
             analysis_incomplete: false,
+            pdf_local_path: None,
         }
     }
 
@@ -197,6 +199,7 @@ mod tests {
             space_complexity: None,
             analysis_mode: None,
             analysis_incomplete: false,
+            pdf_local_path: None,
         };
 
         paper.touch();

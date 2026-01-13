@@ -73,6 +73,8 @@ pub struct Settings {
     #[serde(default)]
     pub latex_download_path: Option<String>,
     #[serde(default)]
+    pub pdf_download_path: Option<String>,
+    #[serde(default)]
     pub deep_analysis_mode: Option<String>,
     #[serde(default)]
     pub retry_config: Option<RetryConfig>,
@@ -315,6 +317,7 @@ impl Default for Settings {
             schedule_week_days: None,
             arxiv_categories: None,
             latex_download_path: None,
+            pdf_download_path: None,
             deep_analysis_mode: None,
             retry_config: None,
             async_analysis_mode: Some("sync".to_string()),

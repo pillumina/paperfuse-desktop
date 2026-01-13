@@ -295,6 +295,21 @@
       "customPathDesc": "LaTeX sources will be downloaded to this directory when papers meet the Deep Analysis Threshold.",
       "statusEnabled": "LaTeX download is enabled by default"
     },
+    "pdf": {
+      "title": "PDF Download Directory",
+      "infoTitle": "In-App PDF Viewing:",
+      "infoDesc": "Configure where PDF files are stored for in-app viewing. PDFs are downloaded on-demand when you click 'Open PDF' in paper details.",
+      "downloadDirectory": "Download Directory",
+      "defaultBadge": "Default",
+      "browse": "Browse",
+      "open": "Open",
+      "openTooltip": "Open this directory in Finder",
+      "reset": "Reset",
+      "resetTooltip": "Reset to default path",
+      "defaultPathDesc": "Using default path. PDFs will be downloaded to ~/Documents/PaperFuse/pdfs",
+      "customPathDesc": "PDFs will be downloaded to this directory when you open them in the viewer.",
+      "statusEnabled": "PDF download is enabled"
+    },
     "cache": {
       "title": "Relevance Cache",
       "infoTitle": "Classification Cache:",

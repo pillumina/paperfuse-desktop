@@ -295,6 +295,21 @@
       "customPathDesc": "当论文达到深度分析阈值时，LaTeX 源代码将下载到此目录。",
       "statusEnabled": "LaTeX 下载默认已启用"
     },
+    "pdf": {
+      "title": "PDF 下载目录",
+      "infoTitle": "应用内 PDF 预览：",
+      "infoDesc": "配置应用内 PDF 预览的文件存储位置。当您在论文详情中点击打开 PDF 时，PDF 将按需下载。",
+      "downloadDirectory": "下载目录",
+      "defaultBadge": "默认",
+      "browse": "浏览",
+      "open": "打开",
+      "openTooltip": "在 Finder 中打开此目录",
+      "reset": "重置",
+      "resetTooltip": "重置为默认路径",
+      "defaultPathDesc": "使用默认路径。PDF 将下载到 ~/Documents/PaperFuse/pdfs",
+      "customPathDesc": "PDF 将下载到此目录以供在查看器中打开。",
+      "statusEnabled": "PDF 下载已启用"
+    },
     "cache": {
       "title": "相关性缓存",
       "infoTitle": "分类缓存：",

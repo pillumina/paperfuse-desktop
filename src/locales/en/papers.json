@@ -357,5 +357,19 @@
     "info": "Papers marked as spam will not appear in the main list but will be kept in the spam folder for recovery.",
     "confirm": "Mark as Spam",
     "cancel": "Cancel"
+  },
+  "pdfViewer": {
+    "title": "PDF Viewer",
+    "download": "Download PDF",
+    "downloading": "Downloading...",
+    "loading": "Loading PDF...",
+    "notDownloaded": "PDF not downloaded yet",
+    "loadError": "Failed to load PDF",
+    "downloadError": "Failed to download PDF",
+    "pageOf": "Page {{current}} of {{total}}",
+    "previousPage": "Previous page",
+    "nextPage": "Next page",
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out"
   }
 }

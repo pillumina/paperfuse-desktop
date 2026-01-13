@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { FolderOpen, Info, ExternalLink, Trash2, Database } from 'lucide-react';
+import { FolderOpen, Info, ExternalLink, Trash2, Database, FileText } from 'lucide-react';
 import { Settings, DEFAULT_SETTINGS } from '../../lib/types';
 import { useSettings, useSaveSettings, useCacheStats, useClearCache } from '../../hooks/useSettings';
 import { open } from '@tauri-apps/plugin-dialog';
@@ -37,7 +37,7 @@ export function StorageSection() {
   }, [localSettings, savedSettings]);
 
   // Get the effective path (configured or default)
-  const getEffectivePath = (): string => {
+  const getEffectiveLatexPath = (): string => {
     if (localSettings.latexDownloadPath) {
       return localSettings.latexDownloadPath;
     }
@@ -45,9 +45,18 @@ export function StorageSection() {
     return '~/Documents/PaperFuse/latex';
   };
 
-  const isUsingDefaultPath = !localSettings.latexDownloadPath;
+  const getEffectivePdfPath = (): string => {
+    if (localSettings.pdfDownloadPath) {
+      return localSettings.pdfDownloadPath;
+    }
+    // Default path
+    return '~/Documents/PaperFuse/pdfs';
+  };
 
-  const handleSelectFolder = async () => {
+  const isUsingDefaultLatexPath = !localSettings.latexDownloadPath;
+  const isUsingDefaultPdfPath = !localSettings.pdfDownloadPath;
+
+  const handleSelectLatexFolder = async () => {
     try {
       console.log('[StorageSection] Opening folder selection dialog');
       const selected = await open({
@@ -72,15 +81,61 @@ export function StorageSection() {
     }
   };
 
-  const handleClearPath = () => {
+  const handleSelectPdfFolder = async () => {
+    try {
+      console.log('[StorageSection] Opening folder selection dialog for PDF');
+      const selected = await open({
+        directory: true,
+        multiple: false,
+        title: 'Select PDF Download Directory',
+      });
+
+      console.log('[StorageSection] Dialog returned:', selected);
+
+      // Handle the return value properly
+      if (selected !== null && selected !== undefined) {
+        // In Tauri 2.0, dialog returns a string or array of strings
+        const path = Array.isArray(selected) ? selected[0] : selected;
+        console.log('[StorageSection] Selected directory:', path);
+        setLocalSettings({ ...localSettings, pdfDownloadPath: path });
+      } else {
+        console.log('[StorageSection] Dialog was cancelled');
+      }
+    } catch (error) {
+      console.error('[StorageSection] Failed to select directory:', error);
+    }
+  };
+
+  const handleClearLatexPath = () => {
     console.log('[StorageSection] Clearing LaTeX download path (will use default)');
     setLocalSettings({ ...localSettings, latexDownloadPath: undefined });
   };
 
-  const handleOpenDirectory = async () => {
+  const handleClearPdfPath = () => {
+    console.log('[StorageSection] Clearing PDF download path (will use default)');
+    setLocalSettings({ ...localSettings, pdfDownloadPath: undefined });
+  };
+
+  const handleOpenLatexDirectory = async () => {
     try {
-      const path = getEffectivePath();
-      console.log('[StorageSection] Opening directory:', path);
+      const path = getEffectiveLatexPath();
+      console.log('[StorageSection] Opening LaTeX directory:', path);
+
+      // Convert ~/ to home directory
+      const expandedPath = path.replace(/^~/, process.env.HOME || '');
+
+      // Use Command to open the directory in Finder
+      const command = Command.create('open', [expandedPath]);
+      await command.execute();
+    } catch (error) {
+      console.error('[StorageSection] Failed to open directory:', error);
+    }
+  };
+
+  const handleOpenPdfDirectory = async () => {
+    try {
+      const path = getEffectivePdfPath();
+      console.log('[StorageSection] Opening PDF directory:', path);
 
       // Convert ~/ to home directory
       const expandedPath = path.replace(/^~/, process.env.HOME || '');
@@ -177,7 +232,7 @@ export function StorageSection() {
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               {t('settings.storage.latex.downloadDirectory')}
-              {isUsingDefaultPath && (
+              {isUsingDefaultLatexPath && (
                 <span className="ml-2 text-xs px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-full">
                   {t('settings.storage.latex.defaultBadge')}
                 </span>
@@ -186,13 +241,13 @@ export function StorageSection() {
             <div className="flex gap-2">
               <div className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white flex items-center gap-2">
                 <FolderOpen className="w-4 h-4 text-gray-500 dark:text-gray-400 flex-shrink-0" />
-                <span className="truncate" title={getEffectivePath()}>
-                  {getEffectivePath()}
+                <span className="truncate" title={getEffectiveLatexPath()}>
+                  {getEffectiveLatexPath()}
                 </span>
               </div>
               <button
                 type="button"
-                onClick={handleSelectFolder}
+                onClick={handleSelectLatexFolder}
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
               >
                 <FolderOpen className="w-4 h-4" />
@@ -200,17 +255,17 @@ export function StorageSection() {
               </button>
               <button
                 type="button"
-                onClick={handleOpenDirectory}
+                onClick={handleOpenLatexDirectory}
                 className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg flex items-center gap-2"
                 title={t('settings.storage.latex.openTooltip')}
               >
                 <ExternalLink className="w-4 h-4" />
                 {t('settings.storage.latex.open')}
               </button>
-              {!isUsingDefaultPath && (
+              {!isUsingDefaultLatexPath && (
                 <button
                   type="button"
-                  onClick={handleClearPath}
+                  onClick={handleClearLatexPath}
                   className="px-4 py-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 border border-red-300 dark:border-red-700 rounded-lg"
                   title={t('settings.storage.latex.resetTooltip')}
                 >
@@ -220,7 +275,7 @@ export function StorageSection() {
             </div>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 flex items-center justify-between">
               <span>
-                {isUsingDefaultPath
+                {isUsingDefaultLatexPath
                   ? t('settings.storage.latex.defaultPathDesc')
                   : t('settings.storage.latex.customPathDesc')}
               </span>
@@ -232,6 +287,88 @@ export function StorageSection() {
             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
             <span className="text-sm text-green-800 dark:text-green-200 font-medium">
               {t('settings.storage.latex.statusEnabled')}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* PDF Download Path */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 mb-6">
+        <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+          <FileText className="w-5 h-5" />
+          {t('settings.storage.pdf.title')}
+        </h3>
+
+        <div className="space-y-4">
+          {/* Info Box */}
+          <div className="flex items-start gap-3 p-4 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg">
+            <Info className="w-5 h-5 text-orange-600 dark:text-orange-400 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-sm text-orange-800 dark:text-orange-200">
+                <strong>{t('settings.storage.pdf.infoTitle')}</strong> {t('settings.storage.pdf.infoDesc')}
+              </p>
+            </div>
+          </div>
+
+          {/* Current Path Display */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              {t('settings.storage.pdf.downloadDirectory')}
+              {isUsingDefaultPdfPath && (
+                <span className="ml-2 text-xs px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-full">
+                  {t('settings.storage.pdf.defaultBadge')}
+                </span>
+              )}
+            </label>
+            <div className="flex gap-2">
+              <div className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white flex items-center gap-2">
+                <FolderOpen className="w-4 h-4 text-gray-500 dark:text-gray-400 flex-shrink-0" />
+                <span className="truncate" title={getEffectivePdfPath()}>
+                  {getEffectivePdfPath()}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={handleSelectPdfFolder}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+              >
+                <FolderOpen className="w-4 h-4" />
+                {t('settings.storage.pdf.browse')}
+              </button>
+              <button
+                type="button"
+                onClick={handleOpenPdfDirectory}
+                className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg flex items-center gap-2"
+                title={t('settings.storage.pdf.openTooltip')}
+              >
+                <ExternalLink className="w-4 h-4" />
+                {t('settings.storage.pdf.open')}
+              </button>
+              {!isUsingDefaultPdfPath && (
+                <button
+                  type="button"
+                  onClick={handleClearPdfPath}
+                  className="px-4 py-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 border border-red-300 dark:border-red-700 rounded-lg"
+                  title={t('settings.storage.pdf.resetTooltip')}
+                >
+                  {t('settings.storage.pdf.reset')}
+                </button>
+              )}
+            </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 flex items-center justify-between">
+              <span>
+                {isUsingDefaultPdfPath
+                  ? t('settings.storage.pdf.defaultPathDesc')
+                  : t('settings.storage.pdf.customPathDesc')}
+              </span>
+            </p>
+          </div>
+
+          {/* Status Badge */}
+          <div className="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+            <span className="text-sm text-green-800 dark:text-green-200 font-medium">
+              {t('settings.storage.pdf.statusEnabled')}
             </span>
           </div>
         </div>

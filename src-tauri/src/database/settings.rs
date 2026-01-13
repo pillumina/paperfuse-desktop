@@ -84,6 +84,9 @@ impl SettingsRepository {
                 "latex_download_path" => {
                     settings.latex_download_path = Some(value);
                 }
+                "pdf_download_path" => {
+                    settings.pdf_download_path = Some(value);
+                }
                 "deep_analysis_mode" => {
                     settings.deep_analysis_mode = Some(value);
                 }
@@ -341,7 +344,15 @@ impl SettingsRepository {
         }
 
         if let Some(ref path) = settings.latex_download_path {
+            println!("[SettingsRepository::save_all] Saving latex_download_path: {}", path);
             save(&self.pool, &now, "latex_download_path", path).await?;
+        }
+
+        if let Some(ref path) = settings.pdf_download_path {
+            println!("[SettingsRepository::save_all] Saving pdf_download_path: {}", path);
+            save(&self.pool, &now, "pdf_download_path", path).await?;
+        } else {
+            println!("[SettingsRepository::save_all] pdf_download_path is None (not saving)");
         }
 
         if let Some(ref mode) = settings.deep_analysis_mode {

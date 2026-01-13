@@ -11,6 +11,7 @@ mod retry;
 mod fetch;
 mod scheduler;
 mod latex_parser;
+mod analysis;
 
 // Re-export specific types instead of glob to avoid ambiguity
 pub use models::{

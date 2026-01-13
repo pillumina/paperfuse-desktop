@@ -2816,6 +2816,7 @@ dependencies = [
  "chrono",
  "dirs 5.0.1",
  "flate2",
+ "lazy_static",
  "open",
  "quick-xml 0.37.5",
  "rand 0.8.5",

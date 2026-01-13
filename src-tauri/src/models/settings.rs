@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use crate::analysis;
 
 /// Retry configuration for LLM API calls
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -84,6 +85,9 @@ pub struct Settings {
     /// Maximum concurrent analyses in async mode (1-5, default: 1)
     #[serde(default)]
     pub max_concurrent_analyses: Option<usize>,
+    /// Modular analysis configuration (enabled blocks and modes)
+    #[serde(default)]
+    pub analysis_config: Option<analysis::UserAnalysisConfig>,
 }
 
 /// LLM provider
@@ -322,6 +326,7 @@ impl Default for Settings {
             retry_config: None,
             async_analysis_mode: Some("sync".to_string()),
             max_concurrent_analyses: Some(1),
+            analysis_config: Some(analysis::UserAnalysisConfig::default()),
         }
     }
 }

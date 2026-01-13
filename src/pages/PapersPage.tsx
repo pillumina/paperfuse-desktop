@@ -403,7 +403,9 @@ export default function PapersPage() {
         status: 'completed',
       }));
 
+      // Refresh both list and individual paper query
       refetch();
+      queryClient.invalidateQueries({ queryKey: ['paper', id] });
     } catch (error) {
       console.error('[PapersPage] Analysis failed:', error);
       const errorMessage = error instanceof Error ? error.message : String(error);
@@ -603,8 +605,12 @@ export default function PapersPage() {
         failed,
       }));
 
-      // Refresh data
+      // Refresh data - both list and individual paper queries
       refetch();
+      // Invalidate individual paper queries so detail pages show fresh data
+      paperIds.forEach(id => {
+        queryClient.invalidateQueries({ queryKey: ['paper', id] });
+      });
 
       // Show success toast
       const success = total - failed;

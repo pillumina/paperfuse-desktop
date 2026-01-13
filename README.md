@@ -312,23 +312,38 @@ The app uses SQLite with the following main tables:
 
 ## 🗺️ Roadmap
 
-### Planned Features
+### Recently Completed ✨
+
+- [x] Sort state persistence - Remember user's sort preferences across navigation
+- [x] Collection indicator badges - Visual indicators for papers in collections
+- [x] Collection quick filter - Fast filter to show only papers in collections
+- [x] Analysis language selection - Choose Chinese or English for AI analysis output
+- [x] Cancel button for analysis - Properly i18n'ed cancel button during analysis
+- [x] Optimized paper card layout - Improved grid view with better overflow handling
+
+### In Progress 🚧
 
 - [ ] Export papers to BibTeX/EndNote/Zotero
 - [ ] PDF annotation and highlighting
 - [ ] Advanced search with boolean operators
-- [ ] Citation graph and related papers
 - [ ] Custom AI prompts for analysis
-- [ ] Cloud sync for collections
-- [ ] Plugins system
-- [ ] Additional language support
 
-### Under Consideration
+### Planned Features 📋
+
+- [ ] Citation graph and related papers
+- [ ] Cloud sync for collections and settings
+- [ ] Plugins system for custom analysis
+- [ ] Additional language support (Japanese, Korean, etc.)
+- [ ] Paper ranking by impact factor
+- [ ] Automatic citation extraction
+- [ ] Reference management integration
+
+### Under Consideration 💭
 
 - [ ] Windows and Linux support
-- [ ] Collaboration features
-- [ ] Integration with reference managers
+- [ ] Collaboration features (shared collections)
 - [ ] Mobile companion app
+- [ ] Web-based version
 
 ## 🤝 Contributing
 

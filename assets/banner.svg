@@ -12,13 +12,13 @@
     </style>
   </defs>
 
-  <!-- Subtle background -->
-  <rect width="1200" height="300" fill="#F8FAFC"/>
+  <!-- White background -->
+  <rect width="1200" height="300" fill="#FFFFFF"/>
 
   <!-- Centered content group -->
   <g transform="translate(600, 140)">
     <!-- Logo Icon: Stylized paper fusion symbol -->
-    <g transform="translate(-280, -65)">
+    <g transform="translate(-380, -90)">
       <!-- Back paper -->
       <rect x="30" y="20" width="70" height="90" fill="#BFDBFE" rx="4" opacity="0.6"/>
       <!-- Middle paper -->
@@ -31,12 +31,12 @@
     </g>
 
     <!-- Main Text: PaperFuse -->
-    <text x="70" y="10" text-anchor="middle" class="main-text" font-size="88" font-weight="700" letter-spacing="-1.5">
+    <text x="0" y="15" text-anchor="middle" class="main-text" font-size="110" font-weight="700" letter-spacing="-2">
       <tspan fill="#1E293B">Paper</tspan><tspan fill="url(#blueGradient)">Fuse</tspan>
     </text>
 
     <!-- Tagline -->
-    <text x="70" y="50" text-anchor="middle" class="tagline" font-size="22" fill="#64748B" font-weight="500" letter-spacing="0.3">
+    <text x="0" y="58" text-anchor="middle" class="tagline" font-size="23" fill="#64748B" font-weight="300" font-style="italic" letter-spacing="0.8">
       AI-Powered Research Paper Discovery
     </text>
   </g>

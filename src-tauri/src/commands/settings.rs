@@ -1,6 +1,8 @@
 use crate::database::{SettingsRepository, ClassificationCacheRepository};
 use crate::models::Settings;
 use crate::database::classification_cache::CacheStats;
+use crate::analysis::{AnalysisBlockConfig, UserAnalysisConfig};
+use crate::analysis::registry::REGISTRY;
 use sqlx::SqlitePool;
 use tauri::State;
 
@@ -123,4 +125,53 @@ pub async fn clear_cache(
     }
 
     result.map_err(|e| e.to_string())
+}
+
+// ============================================================================
+// Analysis Configuration Commands
+// ============================================================================
+
+/// Get all available analysis blocks
+#[tauri::command]
+pub async fn get_available_blocks() -> Result<Vec<AnalysisBlockConfig>, String> {
+    eprintln!("[get_available_blocks] Returning all available analysis blocks");
+    Ok(REGISTRY.get_all())
+}
+
+/// Get user's analysis configuration
+#[tauri::command]
+pub async fn get_analysis_config(
+    pool: State<'_, SqlitePool>,
+) -> Result<UserAnalysisConfig, String> {
+    eprintln!("[get_analysis_config] Fetching user analysis config from database");
+
+    let repo = SettingsRepository::new(pool.inner());
+    let settings = repo.get_all().await.map_err(|e| e.to_string())?;
+
+    // Return saved config or default
+    let config = settings.analysis_config.unwrap_or_default();
+    eprintln!("[get_analysis_config] Returning config with {} blocks", config.blocks.len());
+
+    Ok(config)
+}
+
+/// Save user's analysis configuration
+#[tauri::command]
+pub async fn save_analysis_config(
+    pool: State<'_, SqlitePool>,
+    config: UserAnalysisConfig,
+) -> Result<(), String> {
+    eprintln!("[save_analysis_config] Saving analysis config with {} blocks", config.blocks.len());
+
+    let repo = SettingsRepository::new(pool.inner());
+    let mut settings = repo.get_all().await.map_err(|e| e.to_string())?;
+
+    // Update the analysis config
+    settings.analysis_config = Some(config);
+
+    // Save to database
+    repo.save_all(&settings).await.map_err(|e| e.to_string())?;
+
+    eprintln!("[save_analysis_config] Successfully saved analysis config");
+    Ok(())
 }

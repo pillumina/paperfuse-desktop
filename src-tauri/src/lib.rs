@@ -42,6 +42,9 @@ pub use commands::{
     FetchManagerState, SchedulerState,
 };
 
+// Re-export analysis config commands
+pub use commands::settings::{get_available_blocks, get_analysis_config, save_analysis_config};
+
 /// Application state
 pub struct AppState {
     pub db: Arc<SqlitePool>,
@@ -113,6 +116,9 @@ pub fn run() {
             set_setting,
             get_cache_stats,
             clear_cache,
+            get_available_blocks,
+            get_analysis_config,
+            save_analysis_config,
             // Fetch commands
             start_fetch,
             get_fetch_status,

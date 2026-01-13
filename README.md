@@ -331,10 +331,61 @@ The app uses SQLite with the following main tables:
 - [x] Cancel button for analysis - Properly i18n'ed cancel button during analysis
 - [x] Optimized paper card layout - Improved grid view with better overflow handling
 
+### Upcoming Features 🎯
+
+#### 📊 Research Progress Dashboard
+Visual analytics for your research journey
+- Weekly/monthly reading statistics with time tracking
+- Topic distribution charts showing research focus areas
+- Trend analysis comparing reading activity over time
+- Hot topic tracking with paper count visualization
+- Personal research velocity and productivity metrics
+
+#### 🔍 Semantic Search
+Natural language search powered by local embeddings
+- Search using natural language queries (e.g., "transformer applications in RL")
+- Support for mixed Chinese-English queries
+- Local vector embeddings for privacy protection
+- Semantic similarity ranking beyond keyword matching
+- Context-aware result highlighting
+
+#### ⚡ Quick Compare Mode
+Side-by-side paper comparison for efficient evaluation
+- Multi-paper comparison table with key metrics
+- Novelty scores, methodology, datasets side by side
+- One-click export to LaTeX/Markdown tables
+- Visual diff for algorithm flows and formulas
+- Customizable comparison dimensions
+
+#### 🎯 Smart Recommendations
+Personalized paper suggestions based on your behavior
+- Reading history analysis to recommend similar papers
+- Collection-based content recommendations
+- Citation graph traversal for related work discovery
+- Preference learning from scoring patterns
+- Multi-factor ranking (relevance + novelty + impact)
+
+#### 📚 Deep Reading Workspace
+Integrated environment for focused paper study
+- Split-view with AI summary and annotations always visible
+- In-app PDF highlighting and note-taking
+- AI Q&A chat mode based on paper content
+- Note export to Markdown/Notion/Obsidian
+- One-click access to citation/reference papers
+
+#### 📝 Literature Review Generator
+AI-assisted review paper creation
+- Auto-generate review from collections or topics
+- Organize by timeline, methodology, or themes
+- Extract and synthesize key conclusions
+- Auto-create comparison tables and figures
+- Export to publication-ready LaTeX/Markdown
+
 ### In Progress 🚧
 
+- [ ] Conference deadline tracker - Major conference deadlines with submission reminders
+- [ ] Smart deduplication - Merge ArXiv preprints with published versions
 - [ ] Export papers to BibTeX/EndNote/Zotero
-- [ ] PDF annotation and highlighting
 - [ ] Advanced search with boolean operators
 - [ ] Custom AI prompts for analysis
 

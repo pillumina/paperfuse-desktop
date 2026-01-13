@@ -8,6 +8,7 @@ use crate::arxiv::{fetch_papers, FetchOptions};
 use crate::database::PaperRepository;
 use crate::llm::{LlmClient, StandardAnalysisResult, FullAnalysisResult};
 use crate::models::{Paper, LLMProvider};
+use crate::analysis::{AnalysisDepth, UserAnalysisConfig};
 use sqlx::SqlitePool;
 use tauri::State;
 
@@ -104,8 +105,11 @@ pub async fn analyze_paper(
         e.to_string()
     })?;
 
-    // Get topics from settings
+    // Get topics and analysis config from settings
     let topics = settings.topics.clone();
+    let analysis_config = settings.analysis_config.unwrap_or_default();
+
+    eprintln!("[analyze_paper] Using analysis config with {} blocks", analysis_config.blocks.len());
 
     // Get LaTeX download path from settings
     let latex_path = settings.latex_download_path.as_deref();
@@ -137,50 +141,68 @@ pub async fn analyze_paper(
         None
     };
 
-    // Perform analysis based on mode
-    match analysis_mode.as_str() {
-        "full" => {
-            // Full mode: analyze complete LaTeX (or abstract if LaTeX unavailable)
-            let content = if let Some(ref latex) = latex_content {
-                crate::latex_parser::clean_latex(latex)
-            } else {
-                eprintln!("[analyze_paper] Full mode: LaTeX not available, using abstract");
-                entry.summary.clone()
-            };
+    // Determine analysis depth
+    let depth = match analysis_mode.as_str() {
+        "full" => AnalysisDepth::Full,
+        "standard" | _ => AnalysisDepth::Standard,
+    };
 
-            let result: FullAnalysisResult = client
-                .analyze_full(&paper.title, &entry.summary, &topics, &content, &analysis_language)
-                .await
+    // Build modular prompt using new system
+    let prompt = crate::analysis::build_analysis_prompt(
+        &paper.title,
+        &entry.summary,
+        &topics,
+        latex_content.as_deref(),
+        &analysis_language,
+        &analysis_config,
+        depth,
+    );
+
+    eprintln!("[analyze_paper] Generated modular prompt ({} chars)", prompt.chars().count());
+
+    // Send request to LLM
+    let response = client
+        .send_chat_request(&prompt, depth.as_str())
+        .await
+        .map_err(|e| {
+            eprintln!("[analyze_paper] LLM request failed: {}", e);
+            e.to_string()
+        })?;
+
+    eprintln!("[analyze_paper] Raw response from LLM: {}", &response.chars().take(500).collect::<String>());
+
+    // Clean the response (remove markdown code blocks)
+    let cleaned_response = client.clean_response(&response);
+    if response != cleaned_response {
+        eprintln!("[analyze_paper] Cleaned markdown blocks from response");
+    }
+
+    // Fix common JSON formatting errors
+    let fixed_response = client.fix_json_formatting(&cleaned_response);
+    if cleaned_response != fixed_response {
+        eprintln!("[analyze_paper] Applied JSON formatting fixes");
+    }
+
+    // Parse the JSON response based on depth
+    match depth {
+        AnalysisDepth::Full => {
+            let result: crate::llm::FullAnalysisResult = serde_json::from_str(&fixed_response)
                 .map_err(|e| {
-                    eprintln!("[analyze_paper] Full analysis failed: {}", e);
-                    e.to_string()
+                    eprintln!("[analyze_paper] Failed to parse full analysis: {}", e);
+                    eprintln!("[analyze_paper] Attempted to parse: {}", &fixed_response.chars().take(1000).collect::<String>());
+                    format!("Failed to parse full analysis result: {}", e)
                 })?;
 
             // Update paper with analysis results
             update_paper_with_full_analysis(&mut paper, result);
             paper.analysis_incomplete = latex_content.is_none();
         }
-        "standard" | _ => {
-            // Standard mode: analyze intro + conclusion (or abstract if LaTeX unavailable)
-            let content = if let Some(ref latex) = latex_content {
-                crate::latex_parser::extract_intro_conclusion(latex)
-            } else {
-                eprintln!("[analyze_paper] Standard mode: LaTeX not available, using abstract");
-                String::new()
-            };
-
-            let analysis_content = if content.is_empty() {
-                &entry.summary
-            } else {
-                &content
-            };
-
-            let result: StandardAnalysisResult = client
-                .analyze_standard(&paper.title, &entry.summary, &topics, analysis_content, &analysis_language)
-                .await
+        AnalysisDepth::Standard => {
+            let result: crate::llm::StandardAnalysisResult = serde_json::from_str(&fixed_response)
                 .map_err(|e| {
-                    eprintln!("[analyze_paper] Standard analysis failed: {}", e);
-                    e.to_string()
+                    eprintln!("[analyze_paper] Failed to parse standard analysis: {}", e);
+                    eprintln!("[analyze_paper] Attempted to parse: {}", &fixed_response.chars().take(1000).collect::<String>());
+                    format!("Failed to parse standard analysis result: {}", e)
                 })?;
 
             // Update paper with analysis results

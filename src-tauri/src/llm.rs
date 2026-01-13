@@ -238,7 +238,7 @@ impl LlmClient {
 
     /// Clean LLM response by removing markdown code blocks
     /// Handles both outer code blocks and nested code blocks within JSON strings
-    fn clean_response(&self, response: &str) -> String {
+    pub fn clean_response(&self, response: &str) -> String {
         let mut response = response.trim().to_string();
 
         // Loop to remove all markdown code blocks (including nested ones)
@@ -281,7 +281,7 @@ impl LlmClient {
     }
 
     /// Attempt to fix common JSON formatting errors from LLM responses
-    fn fix_json_formatting(&self, json_str: &str) -> String {
+    pub fn fix_json_formatting(&self, json_str: &str) -> String {
         let mut fixed = json_str.to_string();
 
         // Fix 1: Remove unescaped newlines in string literals
@@ -878,7 +878,7 @@ impl LlmClient {
     }
 
     /// Send chat request to the appropriate LLM API
-    async fn send_chat_request(&self, prompt: &str, analysis_type: &str) -> Result<String, LlmError> {
+    pub async fn send_chat_request(&self, prompt: &str, analysis_type: &str) -> Result<String, LlmError> {
         // Log prompt character count
         let prompt_chars = prompt.chars().count();
         let prompt_bytes = prompt.len();

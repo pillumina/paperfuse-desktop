@@ -3,7 +3,8 @@
 pub mod queue;
 
 use crate::arxiv::{self, ArxivEntry, FetchOptions as ArxivFetchOptions};
-use crate::database::{PaperRepository, FetchHistoryRepository, FetchHistoryEntry, PaperSummary};
+use crate::analysis::{AnalysisDepth, UserAnalysisConfig};
+use crate::database::{PaperRepository, FetchHistoryRepository, FetchHistoryEntry, PaperSummary, SettingsRepository};
 use crate::llm::{self, LlmClient, LlmError, RelevanceResult};
 use crate::models::{FetchOptions, FetchStatus, Paper, TopicConfig};
 use queue::{TaskQueue, QueuedTask};

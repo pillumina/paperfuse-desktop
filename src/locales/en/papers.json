@@ -86,7 +86,8 @@
     "fetchedRecent": "Fetched (7d)",
     "fetchedToday": "Fetched today",
     "highScore": "High Score",
-    "hasCode": "Has Code"
+    "hasCode": "Has Code",
+    "inCollection": "In Collection"
   },
   "sortControl": {
     "sortBy": "Sort by:",
@@ -327,6 +328,7 @@
     "fetched30days": "Fetched (30d)",
     "fetchedAllTime": "Fetched (all)",
     "hasCode": "Has Code",
+    "inCollection": "In Collection",
     "showing": "Showing {{displayed}} of {{total}} papers",
     "clear": "Clear all filters",
     "clearSearch": "Clear search",
@@ -336,7 +338,8 @@
     "clearScore": "Clear score",
     "clearDate": "Clear date range",
     "clearFetchedDate": "Clear fetched date range",
-    "clearCode": "Clear code filter"
+    "clearCode": "Clear code filter",
+    "clearCollection": "Clear collection filter"
   },
   "errors": {
     "deleteFailed": "Failed to delete paper",

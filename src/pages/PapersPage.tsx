@@ -4,6 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useDeletePaper, usePapers, usePapersByTag, usePaperCount, useSearchPapers, useTagsWithCounts } from '../hooks/usePapers';
 import { useSettings } from '../hooks/useSettings';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useCollections } from '../hooks/useCollections';
 import { useAutoAnimate } from '@formkit/auto-animate/react';
 import { VirtualPaperList } from '../components/papers/VirtualPaperList';
 import { VirtualPaperGrid } from '../components/papers/VirtualPaperGrid';
@@ -20,7 +21,7 @@ import { QuickFilterChips } from '../components/papers/QuickFilterChips';
 import { AddToCollectionDialog } from '../components/collections/AddToCollectionDialog';
 import { AnalysisModeDialog, type AnalysisMode, type AnalysisLanguage } from '../components/papers/AnalysisModeDialog';
 import { AnalysisProgressDialog } from '../components/papers/AnalysisProgressDialog';
-import { AlertTriangle, Trash2, CheckSquare, Square, X, Hash, Calendar, Clock, Tag, Code2, Building2, AlertOctagon, FolderPlus, Sparkles } from 'lucide-react';
+import { AlertTriangle, Trash2, CheckSquare, Square, X, Hash, Calendar, Clock, Tag, Code2, Building2, AlertOctagon, FolderPlus, Sparkles, Bookmark } from 'lucide-react';
 import { invoke } from '@tauri-apps/api/core';
 import type { Paper } from '../lib/types';
 
@@ -43,6 +44,7 @@ export default function PapersPage() {
   const [dateRange, setDateRange] = useState<'today' | '7days' | '30days' | 'all' | null>(null);
   const [fetchedDateRange, setFetchedDateRange] = useState<'today' | '7days' | '30days' | 'all' | null>(null);
   const [onlyWithCode, setOnlyWithCode] = useState<boolean>(false);
+  const [onlyInCollection, setOnlyInCollection] = useState<boolean>(false);
   const [sortBy, setSortBy] = useState<'date' | 'fetchedDate' | 'score' | 'title'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -99,6 +101,8 @@ export default function PapersPage() {
         setMinScore(state.minScore || null);
         setDateRange(state.dateRange || null);
         setFetchedDateRange(state.fetchedDateRange || null);
+        setOnlyWithCode(state.onlyWithCode || false);
+        setOnlyInCollection(state.onlyInCollection || false);
         setSortBy(state.sortBy || 'date');
         setSortOrder(state.sortOrder || 'desc');
       } catch (e) {
@@ -109,9 +113,9 @@ export default function PapersPage() {
 
   // Save state to sessionStorage when it changes
   useEffect(() => {
-    const state = { viewMode, searchQuery, selectedTag, selectedTopic, selectedAffiliation, minScore, dateRange, fetchedDateRange, sortBy, sortOrder };
+    const state = { viewMode, searchQuery, selectedTag, selectedTopic, selectedAffiliation, minScore, dateRange, fetchedDateRange, onlyWithCode, onlyInCollection, sortBy, sortOrder };
     sessionStorage.setItem('papersPageState', JSON.stringify(state));
-  }, [viewMode, searchQuery, selectedTag, selectedTopic, selectedAffiliation, minScore, dateRange, fetchedDateRange, sortBy, sortOrder]);
+  }, [viewMode, searchQuery, selectedTag, selectedTopic, selectedAffiliation, minScore, dateRange, fetchedDateRange, onlyWithCode, onlyInCollection, sortBy, sortOrder]);
 
   // Fetch papers based on active filters
   const {
@@ -127,6 +131,28 @@ export default function PapersPage() {
 
   const { data: paperCount } = usePaperCount();
   const { data: settings } = useSettings();
+  const { data: collections } = useCollections();
+
+  // Build a map of paper IDs that are in collections for filtering
+  const [papersInCollections, setPapersInCollections] = useState<Set<string>>(new Set());
+
+  // Fetch papers in collections for filtering
+  useEffect(() => {
+    if (collections && collections.length > 0) {
+      Promise.all(
+        collections.map(collection =>
+          invoke<string[]>('get_collection_papers', { collectionId: collection.id, limit: 10000 })
+        )
+      ).then(allPaperIdsArray => {
+        const idSet = new Set<string>();
+        allPaperIdsArray.flat().forEach(paperIdOrObj => {
+          const id = typeof paperIdOrObj === 'string' ? paperIdOrObj : (paperIdOrObj as any).id;
+          idSet.add(id);
+        });
+        setPapersInCollections(idSet);
+      });
+    }
+  }, [collections]);
 
   // Display count: use paperCount if available, otherwise use papers length
   const displayCount = paperCount ?? papers?.length ?? 0;
@@ -194,7 +220,7 @@ export default function PapersPage() {
             setShowKeyboardShortcuts(false);
           } else if (isSelectionMode) {
             exitSelectionMode();
-          } else if (searchQuery || selectedTag || selectedTopic || selectedAffiliation || minScore !== null || dateRange || fetchedDateRange || onlyWithCode) {
+          } else if (searchQuery || selectedTag || selectedTopic || selectedAffiliation || minScore !== null || dateRange || fetchedDateRange || onlyWithCode || onlyInCollection) {
             clearAllFilters();
           }
           break;
@@ -203,7 +229,7 @@ export default function PapersPage() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [showKeyboardShortcuts, isSelectionMode, searchQuery, selectedTag, selectedTopic, selectedAffiliation, minScore, dateRange, fetchedDateRange, onlyWithCode]);
+  }, [showKeyboardShortcuts, isSelectionMode, searchQuery, selectedTag, selectedTopic, selectedAffiliation, minScore, dateRange, fetchedDateRange, onlyWithCode, onlyInCollection]);
 
   const handleDismissOnboarding = () => {
     setShowOnboarding(false);
@@ -287,6 +313,11 @@ export default function PapersPage() {
     // Filter by code availability
     if (onlyWithCode) {
       result = result.filter(paper => paper.code_available);
+    }
+
+    // Filter by collection
+    if (onlyInCollection) {
+      result = result.filter(paper => papersInCollections.has(paper.id));
     }
 
     // Filter by minimum score
@@ -648,6 +679,7 @@ export default function PapersPage() {
     setDateRange(null);
     setFetchedDateRange(null);
     setOnlyWithCode(false);
+    setOnlyInCollection(false);
   };
 
   // Handle quick filter changes
@@ -656,6 +688,7 @@ export default function PapersPage() {
     fetchedDateRange?: 'today' | '7days' | '30days' | 'all' | null;
     minScore?: number | null;
     codeAvailable?: boolean | null;
+    inCollection?: boolean | null;
   }) => {
     if (filter.dateRange !== undefined) {
       setDateRange(filter.dateRange);
@@ -668,6 +701,9 @@ export default function PapersPage() {
     }
     if (filter.codeAvailable !== undefined) {
       setOnlyWithCode(filter.codeAvailable === true);
+    }
+    if (filter.inCollection !== undefined) {
+      setOnlyInCollection(filter.inCollection === true);
     }
   };
 
@@ -746,7 +782,7 @@ export default function PapersPage() {
       {!searchQuery && (
         <QuickFilterChips
           onFilterChange={handleQuickFilterChange}
-          currentFilters={{ dateRange: dateRange ?? null, fetchedDateRange: fetchedDateRange ?? null, minScore, onlyWithCode }}
+          currentFilters={{ dateRange: dateRange ?? null, fetchedDateRange: fetchedDateRange ?? null, minScore, onlyWithCode, onlyInCollection }}
         />
       )}
 
@@ -997,12 +1033,12 @@ export default function PapersPage() {
       {!searchQuery && (
         <QuickFilterChips
           onFilterChange={handleQuickFilterChange}
-          currentFilters={{ dateRange: dateRange ?? null, fetchedDateRange: fetchedDateRange ?? null, minScore, onlyWithCode }}
+          currentFilters={{ dateRange: dateRange ?? null, fetchedDateRange: fetchedDateRange ?? null, minScore, onlyWithCode, onlyInCollection }}
         />
       )}
 
       {/* Filter Status Indicator */}
-      {(searchQuery || selectedTag || selectedTopic || selectedAffiliation || minScore !== null || dateRange || fetchedDateRange || onlyWithCode) && (
+      {(searchQuery || selectedTag || selectedTopic || selectedAffiliation || minScore !== null || dateRange || fetchedDateRange || onlyWithCode || onlyInCollection) && (
         <div className="mb-4 flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
           <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
             <span className="font-medium">{t('papers.filterTags.showing', { displayed: displayedPapers.length, total: displayCount })}</span>
@@ -1114,6 +1150,19 @@ export default function PapersPage() {
                   onClick={() => setOnlyWithCode(false)}
                   className="hover:text-teal-900 dark:hover:text-teal-100 focus:ring-2 focus:ring-teal-500 rounded"
                   aria-label={t('papers.filterTags.clearCode')}
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </span>
+            )}
+            {onlyInCollection && (
+              <span className="inline-flex items-center gap-1 px-2 py-1 bg-white dark:bg-gray-800 border border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300 rounded text-xs">
+                <Bookmark className="w-3 h-3" />
+                {t('papers.filterTags.inCollection')}
+                <button
+                  onClick={() => setOnlyInCollection(false)}
+                  className="hover:text-amber-900 dark:hover:text-amber-100 focus:ring-2 focus:ring-amber-500 rounded"
+                  aria-label={t('papers.filterTags.clearCollection')}
                 >
                   <X className="w-3 h-3" />
                 </button>

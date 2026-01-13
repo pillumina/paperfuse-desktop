@@ -86,7 +86,8 @@
     "fetchedRecent": "最近拉取",
     "fetchedToday": "今天拉取",
     "highScore": "高分",
-    "hasCode": "有代码"
+    "hasCode": "有代码",
+    "inCollection": "已收藏"
   },
   "sortControl": {
     "sortBy": "排序：",
@@ -327,6 +328,7 @@
     "fetched30days": "最近拉取 (30天)",
     "fetchedAllTime": "全部拉取",
     "hasCode": "含代码",
+    "inCollection": "已收藏",
     "showing": "显示 {{displayed}}/{{total}} 篇论文",
     "clear": "清除所有筛选",
     "clearSearch": "清除搜索",
@@ -336,7 +338,8 @@
     "clearScore": "清除评分",
     "clearDate": "清除日期范围",
     "clearFetchedDate": "清除拉取时间范围",
-    "clearCode": "清除代码筛选"
+    "clearCode": "清除代码筛选",
+    "clearCollection": "清除收藏筛选"
   },
   "errors": {
     "deleteFailed": "删除论文失败",

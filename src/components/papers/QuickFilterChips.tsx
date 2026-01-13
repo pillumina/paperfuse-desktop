@@ -1,4 +1,4 @@
-import { Calendar, Clock, Star, Code2, TrendingUp } from 'lucide-react';
+import { Calendar, Clock, Star, Code2, TrendingUp, Bookmark } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 
 interface QuickFilterChipsProps {
@@ -7,12 +7,14 @@ interface QuickFilterChipsProps {
     fetchedDateRange?: 'today' | '7days' | '30days' | 'all' | null;
     minScore?: number | null;
     codeAvailable?: boolean | null;
+    inCollection?: boolean | null;
   }) => void;
   currentFilters: {
     dateRange: 'today' | '7days' | '30days' | 'all' | null;
     fetchedDateRange: 'today' | '7days' | '30days' | 'all' | null;
     minScore: number | null;
     onlyWithCode: boolean;
+    onlyInCollection: boolean;
   };
 }
 
@@ -25,6 +27,7 @@ type QuickFilter = {
     fetchedDateRange?: 'today' | '7days' | '30days' | 'all' | null;
     minScore?: number | null;
     codeAvailable?: boolean | null;
+    inCollection?: boolean | null;
   };
   isActive: (current: QuickFilterChipsProps['currentFilters']) => boolean;
 };
@@ -75,6 +78,13 @@ export function QuickFilterChips({ onFilterChange, currentFilters }: QuickFilter
       filter: { codeAvailable: true },
       isActive: (current) => current.onlyWithCode,
     },
+    {
+      id: 'in-collection',
+      label: t('papers.quickFilters.inCollection'),
+      icon: <Bookmark className="w-4 h-4" />,
+      filter: { inCollection: true },
+      isActive: (current) => current.onlyInCollection,
+    },
   ];
 
   const handleFilterClick = (filter: QuickFilter) => {
@@ -96,11 +106,15 @@ export function QuickFilterChips({ onFilterChange, currentFilters }: QuickFilter
         });
       } else if (filter.id === 'with-code') {
         onFilterChange({ codeAvailable: false });
+      } else if (filter.id === 'in-collection') {
+        onFilterChange({ inCollection: false });
       }
     } else {
       // Activate: apply the filter
       if (filter.id === 'with-code') {
         onFilterChange({ codeAvailable: true });
+      } else if (filter.id === 'in-collection') {
+        onFilterChange({ inCollection: true });
       } else if (filter.id.startsWith('fetched-')) {
         // Set fetchedDateRange only
         onFilterChange({

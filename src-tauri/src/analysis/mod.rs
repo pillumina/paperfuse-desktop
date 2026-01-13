@@ -8,29 +8,38 @@ pub mod registry;
 use serde::{Deserialize, Serialize};
 use crate::models::TopicConfig;
 
-/// Analysis depth mode (formerly standard/full)
+/// Analysis depth mode (standard/full)
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Hash)]
 #[serde(rename_all = "lowercase")]
 pub enum AnalysisDepth {
-    Quick,   // Formerly "standard" - intro + conclusion only
-    Full,    // Full paper analysis
+    Standard,   // Standard mode - intro + conclusion only
+    Full,       // Full mode - complete paper analysis
 }
 
 impl AnalysisDepth {
     pub fn as_str(&self) -> &'static str {
         match self {
-            AnalysisDepth::Quick => "quick",
+            AnalysisDepth::Standard => "standard",
             AnalysisDepth::Full => "full",
         }
     }
 
     pub fn from_str(s: &str) -> Option<Self> {
         match s {
-            "quick" | "standard" => Some(AnalysisDepth::Quick),
+            "standard" => Some(AnalysisDepth::Standard),
             "full" => Some(AnalysisDepth::Full),
             _ => None,
         }
     }
+}
+
+/// Block mode - when should a block run
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Hash)]
+#[serde(rename_all = "lowercase")]
+pub enum BlockRunMode {
+    Standard,   // Only run in standard analysis
+    Full,       // Only run in full analysis
+    Both,       // Run in both standard and full analysis
 }
 
 /// Block category for UI grouping
@@ -75,6 +84,7 @@ impl I18nText {
 
 /// Configuration for a single analysis block
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct AnalysisBlockConfig {
     pub id: String,
     pub name: I18nText,
@@ -82,7 +92,7 @@ pub struct AnalysisBlockConfig {
     pub category: BlockCategory,
     pub default_enabled: bool,
     pub supported_modes: Vec<AnalysisDepth>,
-    pub default_mode: AnalysisDepth,
+    pub default_mode: BlockRunMode,
     pub order: usize,
     pub depends_on: Option<Vec<String>>,
     pub output_schema: OutputSchema,
@@ -90,10 +100,11 @@ pub struct AnalysisBlockConfig {
 
 /// User's configuration for a block
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct UserBlockConfig {
     pub block_id: String,
     pub enabled: bool,
-    pub mode: AnalysisDepth,
+    pub mode: BlockRunMode,
 }
 
 /// Complete user analysis configuration
@@ -110,71 +121,19 @@ impl Default for UserAnalysisConfig {
     }
 }
 
-/// Get default block configurations (migrated from current behavior)
+/// Get default block configurations from registered blocks
 fn get_default_block_configs() -> Vec<UserBlockConfig> {
-    // Current Standard mode (quick) enabled blocks
-    // Current Full mode enabled blocks
-    vec![
-        // Basic - always enabled
-        UserBlockConfig {
-            block_id: "ai_summary".to_string(),
-            enabled: true,
-            mode: AnalysisDepth::Quick,
-        },
-        UserBlockConfig {
-            block_id: "topics".to_string(),
-            enabled: true,
-            mode: AnalysisDepth::Quick,
-        },
-        // Core - standard mode
-        UserBlockConfig {
-            block_id: "key_insights".to_string(),
-            enabled: true,
-            mode: AnalysisDepth::Quick,
-        },
-        UserBlockConfig {
-            block_id: "quality_assessment".to_string(),
-            enabled: true,
-            mode: AnalysisDepth::Quick,
-        },
-        UserBlockConfig {
-            block_id: "code_links".to_string(),
-            enabled: true,
-            mode: AnalysisDepth::Quick,
-        },
-        UserBlockConfig {
-            block_id: "engineering_notes".to_string(),
-            enabled: true,
-            mode: AnalysisDepth::Quick,
-        },
-        // Technical - full mode only
-        UserBlockConfig {
-            block_id: "algorithms".to_string(),
-            enabled: false,  // Only in full mode by default
-            mode: AnalysisDepth::Full,
-        },
-        UserBlockConfig {
-            block_id: "complexity".to_string(),
-            enabled: false,
-            mode: AnalysisDepth::Full,
-        },
-        UserBlockConfig {
-            block_id: "flowchart".to_string(),
-            enabled: false,
-            mode: AnalysisDepth::Full,
-        },
-        UserBlockConfig {
-            block_id: "formulas".to_string(),
-            enabled: false,
-            mode: AnalysisDepth::Full,
-        },
-        // New module
-        UserBlockConfig {
-            block_id: "related_papers".to_string(),
-            enabled: true,
-            mode: AnalysisDepth::Quick,
-        },
-    ]
+    use crate::analysis::registry::REGISTRY;
+
+    REGISTRY
+        .get_all()
+        .into_iter()
+        .map(|block| UserBlockConfig {
+            block_id: block.id.clone(),
+            enabled: block.default_enabled,
+            mode: block.default_mode,
+        })
+        .collect()
 }
 
 /// Build analysis prompt based on enabled blocks
@@ -203,9 +162,9 @@ mod tests {
 
     #[test]
     fn test_analysis_depth_conversion() {
-        assert_eq!(AnalysisDepth::Quick.as_str(), "quick");
+        assert_eq!(AnalysisDepth::Standard.as_str(), "standard");
         assert_eq!(AnalysisDepth::Full.as_str(), "full");
-        assert_eq!(AnalysisDepth::from_str("quick"), Some(AnalysisDepth::Quick));
-        assert_eq!(AnalysisDepth::from_str("standard"), Some(AnalysisDepth::Quick));
+        assert_eq!(AnalysisDepth::from_str("standard"), Some(AnalysisDepth::Standard));
+        assert_eq!(AnalysisDepth::from_str("full"), Some(AnalysisDepth::Full));
     }
 }

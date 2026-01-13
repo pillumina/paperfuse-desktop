@@ -96,6 +96,12 @@ impl SettingsRepository {
                             .map_err(|e| SettingsError::Serialization(e.to_string()))?
                     );
                 }
+                "analysis_config" => {
+                    settings.analysis_config = Some(
+                        serde_json::from_str(&value)
+                            .map_err(|e| SettingsError::Serialization(e.to_string()))?
+                    );
+                }
                 _ => {}
             }
         }
@@ -355,6 +361,12 @@ impl SettingsRepository {
             let config_json = serde_json::to_string(config)
                 .map_err(|e| SettingsError::Serialization(e.to_string()))?;
             save(&self.pool, &now, "retry_config", &config_json).await?;
+        }
+
+        if let Some(ref config) = settings.analysis_config {
+            let config_json = serde_json::to_string(config)
+                .map_err(|e| SettingsError::Serialization(e.to_string()))?;
+            save(&self.pool, &now, "analysis_config", &config_json).await?;
         }
 
         Ok(())

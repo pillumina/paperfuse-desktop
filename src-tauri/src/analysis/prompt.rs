@@ -1,11 +1,10 @@
-//! Dynamic prompt building based on enabled analysis blocks
-//! Maintains compatibility with existing prompt logic
+//! Dynamic modular prompt building based on enabled analysis blocks
+//! Each block contributes its own instructions and output schema
 
-use crate::analysis::{AnalysisDepth, UserAnalysisConfig, BlockCategory, AnalysisBlockConfig};
-use crate::analysis::blocks::get_all_blocks;
+use crate::analysis::{AnalysisDepth, UserAnalysisConfig, AnalysisBlockConfig, BlockRunMode, OutputSchema};
 use crate::models::TopicConfig;
 
-/// Build analysis prompt based on enabled blocks (maintains current prompt behavior)
+/// Build analysis prompt based on enabled blocks (modular implementation)
 pub fn build_prompt(
     title: &str,
     summary: &str,
@@ -18,24 +17,13 @@ pub fn build_prompt(
     // Get enabled blocks for this depth
     let enabled_blocks = get_enabled_blocks(user_config, depth);
 
-    // Check if we should use standard (quick) or full prompt
-    let has_full_only_blocks = enabled_blocks.iter().any(|b| {
-        matches!(b.category, BlockCategory::Technical)
-    });
-
-    match depth {
-        AnalysisDepth::Quick if !has_full_only_blocks => {
-            build_standard_prompt(title, summary, topics, latex_content, language, &enabled_blocks)
-        }
-        _ => {
-            build_full_prompt(title, summary, topics, latex_content, language, &enabled_blocks)
-        }
-    }
+    // Build the prompt
+    build_modular_prompt(title, summary, topics, latex_content, language, &enabled_blocks, depth)
 }
 
-/// Get blocks enabled for a specific depth
+/// Get blocks enabled for a specific depth based on user config
 fn get_enabled_blocks(config: &UserAnalysisConfig, depth: AnalysisDepth) -> Vec<AnalysisBlockConfig> {
-    let all_blocks = get_all_blocks();
+    let all_blocks = crate::analysis::blocks::get_all_blocks();
     let enabled_map: std::collections::HashMap<String, &crate::analysis::UserBlockConfig> = config
         .blocks
         .iter()
@@ -45,199 +33,309 @@ fn get_enabled_blocks(config: &UserAnalysisConfig, depth: AnalysisDepth) -> Vec<
     all_blocks
         .into_iter()
         .filter(|block| {
-            // Basic blocks are always enabled
-            if matches!(block.category, BlockCategory::Basic) {
-                return true;
-            }
-
             // Check user config
             if let Some(user_cfg) = enabled_map.get(&block.id) {
-                return user_cfg.enabled &&
-                       (user_cfg.mode == depth || block.supported_modes.contains(&depth));
+                if !user_cfg.enabled {
+                    return false;
+                }
+                return match user_cfg.mode {
+                    BlockRunMode::Standard => depth == AnalysisDepth::Standard,
+                    BlockRunMode::Full => depth == AnalysisDepth::Full,
+                    BlockRunMode::Both => true,
+                };
             }
 
-            // Use default
-            block.default_enabled && block.supported_modes.contains(&depth)
+            // Use default from block definition
+            if !block.default_enabled {
+                return false;
+            }
+            match block.default_mode {
+                BlockRunMode::Standard => depth == AnalysisDepth::Standard,
+                BlockRunMode::Full => depth == AnalysisDepth::Full,
+                BlockRunMode::Both => true,
+            }
         })
         .collect()
 }
 
-/// Build standard (quick) mode prompt - identical to current build_standard_prompt
-fn build_standard_prompt(
+/// Build modular prompt from enabled blocks
+fn build_modular_prompt(
     title: &str,
     summary: &str,
     topics: &[TopicConfig],
     latex_content: Option<&str>,
     language: &str,
-    _enabled_blocks: &[AnalysisBlockConfig],
+    enabled_blocks: &[AnalysisBlockConfig],
+    depth: AnalysisDepth,
 ) -> String {
     let topics_json = serde_json::to_string(topics).unwrap_or_default();
 
-    let language_instruction = if language == "zh" {
-        "\n\n===== LANGUAGE REQUIREMENTS =====\n\
-        - Respond in Chinese (中文) for: ai_summary, key_insights, novelty_reason, effectiveness_reason, engineering_notes\n\
-        - Keep in ENGLISH for: code_links (repo names, URLs), suggested_tags, suggested_topics\n\
-        - Engineering notes: Describe in Chinese, but keep project/framework names in English (e.g., verl, vllm, tensorrt-llm)\n\
-        - Tags and topics must be technical terms in English (e.g., \"reinforcement-learning\", \"LLM\", \"transformer\")"
-    } else {
-        ""
-    };
+    // Language instruction
+    let language_instruction = build_language_instruction(language, enabled_blocks, depth);
 
-    // Extract intro/conclusion for standard mode
-    let latex = if let Some(content) = latex_content {
-        crate::latex_parser::extract_intro_conclusion(content)
-    } else {
-        String::new()
-    };
+    // Content section
+    let content_section = build_content_section(latex_content, depth);
+
+    // Analysis tasks from enabled blocks
+    let tasks_section = build_tasks_section(enabled_blocks);
+
+    // JSON schema from enabled blocks
+    let json_schema = build_json_schema(enabled_blocks);
 
     format!(
-        "You are an engineering-focused research analyst. Analyze this paper's introduction and conclusion.{}\n\n\
+        "You are an engineering-focused research analyst. Perform {} analysis.{}\n\n\
         User Research Topics:\n{}\n\n\
         Paper Title:\n{}\n\n\
         Paper Abstract:\n{}\n\n\
-        LaTeX Content (Introduction + Conclusion, truncated to 15000 chars):\n{}\n\n\
+        {}\n\n\
         ===== OUTPUT FORMAT REQUIREMENTS =====\n\
         1. Respond ONLY with valid JSON - no markdown, no code blocks\n\
         2. Do NOT use line breaks inside JSON string values\n\
         3. Use \\\\n for line breaks within text (e.g., \"Point 1\\\\nPoint 2\")\n\
         4. Keep all string values on ONE line\n\
         5. Ensure proper comma separation between array elements\n\
-        \n\
+        {}\n\n\
         ===== ANALYSIS TASKS =====\n\
-        1. Provide 2-3 sentence summary\n\
-        2. Extract 5-7 key insights (each as separate array element)\n\
-        3. Rate novelty (0-10): How original/new is this work?\n\
-        4. Rate effectiveness (0-10): How well does it work?\n\
-        5. Check for code availability (GitHub links, code mentions)\n\
-        6. Provide detailed engineering notes for ENGINEERS who want to apply/contribute:\n\
-           MUST include ALL of the following aspects:\n\
-           - SPECIFIC open source projects (analyze the paper and identify relevant active projects)\n\
-           - WHICH module to contribute to (e.g., scheduling module, attention kernel, data loader)\n\
-           - HOW to contribute (e.g., add this algorithm as an option, integrate optimization)\n\
-           - Implementation challenges (e.g., numerical stability, memory overhead, distributed sync)\n\
-           - Production considerations (e.g., scalability, latency, resource requirements, monitoring)\n\
-           \n\
-           Reference examples by domain:\n\
-           - RL: verl, slime, cleanrl, tianshou, ray/rllib, etc.\n\
-           - LLM/inference: vllm, tensorrt-llm, text-generation-inference, sglang, etc.\n\
-           - Training: deepspeed, megatron-lm, accelerate, fsdp, torchtitan, etc.\n\
-           - Data: datasets, datatrove, hub, MosaicML streaming, etc.\n\
-           \n\
-           Think: What projects would benefit MOST from this research? Be specific.\n\
-        7. Suggest tags and match to user's topics\n\
-        \n\
-        ===== JSON FORMAT (copy this structure) =====\n\
-        {{{{\n\
-          \"ai_summary\": \"Concise 2-3 sentence summary without line breaks\",\n\
-          \"key_insights\": [\"Insight 1\", \"Insight 2\", \"Insight 3\", \"Insight 4\", \"Insight 5\"],\n\
-          \"novelty_score\": 8,\n\
-          \"novelty_reason\": \"Explanation of novelty score\",\n\
-          \"effectiveness_score\": 7,\n\
-          \"effectiveness_reason\": \"Explanation of effectiveness score\",\n\
-          \"code_available\": false,\n\
-          \"code_links\": [],\n\
-          \"engineering_notes\": \"Target projects: Identify MOST relevant repos based on paper's domain. Module: Specify which component. How: Describe integration approach. Challenges: List technical hurdles. Production: Note deployment concerns. Example: 'Consider contributing to ray/rllib for multi-agent RL - add to algorithms/ directory as new policy class. Must handle async environments and policy sharing. Production: Consider worker failure recovery and policy versioning.' Use \\\\n for paragraphs.\",\n\
-          \"suggested_tags\": [\"tag1\", \"tag2\", \"tag3\"],\n\
-          \"suggested_topics\": [\"topic1\", \"topic2\"]\n\
-        }}}}",
-        language_instruction, topics_json, title, summary, latex.chars().take(15000).collect::<String>()
+        {}\n\n\
+        ===== JSON FORMAT =====\n\
+        {{{{\n{}
+}}}}",
+        depth.as_str(),
+        language_instruction,
+        topics_json,
+        title,
+        summary,
+        content_section,
+        build_format_requirements(enabled_blocks, depth),
+        tasks_section,
+        json_schema
     )
 }
 
-/// Build full mode prompt - identical to current build_full_prompt
-fn build_full_prompt(
-    title: &str,
-    summary: &str,
-    topics: &[TopicConfig],
-    latex_content: Option<&str>,
-    language: &str,
-    _enabled_blocks: &[AnalysisBlockConfig],
-) -> String {
-    let topics_json = serde_json::to_string(topics).unwrap_or_default();
+/// Build language instruction based on enabled blocks
+fn build_language_instruction(language: &str, blocks: &[AnalysisBlockConfig], depth: AnalysisDepth) -> String {
+    if language != "zh" {
+        return String::new();
+    }
 
-    let language_instruction = if language == "zh" {
-        "\n\n===== LANGUAGE REQUIREMENTS =====\n\
-        - Respond in Chinese (中文) for: ai_summary, key_insights, novelty_reason, effectiveness_reason, experiment_completeness_reason, engineering_notes, time_complexity, space_complexity\n\
-        - Keep in ENGLISH for: code_links (repo names, URLs), suggested_tags, suggested_topics\n\
-        - Engineering notes: Describe in Chinese, but keep project/framework names in English (e.g., verl, vllm, tensorrt-llm)\n\
-        - Complexity notation: Use LaTeX/O notation in English (e.g., O(n log n)), but explanation in Chinese\n\
-        - Tags and topics must be technical terms in English (e.g., \"reinforcement-learning\", \"LLM\", \"transformer\")"
-    } else {
-        ""
-    };
-
-    let latex = latex_content.unwrap_or("");
+    let has_complexity = blocks.iter().any(|b| b.id == "complexity" || b.id == "algorithms");
+    let has_experiments = depth == AnalysisDepth::Full && blocks.iter().any(|b| b.id == "quality_assessment");
 
     format!(
-        "You are an engineering-focused research analyst. Perform comprehensive full-paper analysis.{}\n\n\
-        User Research Topics:\n{}\n\n\
-        Paper Title:\n{}\n\n\
-        Paper Abstract:\n{}\n\n\
-        Full LaTeX Content:\n{}\n\n\
-        ===== CRITICAL JSON FORMAT REQUIREMENTS =====\n\
-        READ CAREFULLY: Your response MUST be valid JSON that can be parsed by serde_json.\n\
-        \n\
-        1. ABSOLUTELY NO line breaks inside JSON string values\n\
-        2. NO markdown code blocks (```json or ```mermaid)\n\
-        3. Use \\\\n for line breaks within strings\n\
-        4. Every array element and object field must be on its own line\n\
-        5. String values MUST be on ONE line only\n\
-        6. Double-check commas between array elements\n\
-        7. algorithm_flowchart: Provide PLAIN mermaid code WITHOUT any markdown wrappers\n\
-        \n\
-        ===== ANALYSIS TASKS =====\n\
-        1. Provide 2-3 sentence summary\n\
-        2. Extract 5-7 key insights (each insight on ONE line)\n\
-        3. Rate novelty (0-10): How original/new?\n\
-        4. Rate effectiveness (0-10): How well does it work?\n\
-        5. Rate experiment completeness (0-10): Comprehensive evaluation?\n\
-        6. Check for code availability\n\
-        7. Describe algorithm flow as mermaid graph code (one line, no ``` wrapper)\n\
-        8. Analyze time complexity (big-O notation)\n\
-        9. Analyze space complexity (big-O notation)\n\
-        10. Provide detailed engineering notes for ENGINEERS who want to apply/contribute:\n\
-            MUST include ALL of the following aspects:\n\
-            - SPECIFIC open source projects (analyze paper and identify relevant active projects)\n\
-            - WHICH module to contribute to (e.g., scheduling module, attention kernel, data loader)\n\
-            - HOW to contribute (e.g., add this algorithm as an option, integrate optimization)\n\
-            - Implementation challenges (e.g., numerical stability, memory overhead, distributed sync)\n\
-            - Production considerations (e.g., scalability, latency, resource requirements, monitoring)\n\
-            \n\
-            Reference examples by domain:\n\
-            - RL: verl, slime, cleanrl, tianshou, ray/rllib, etc.\n\
-            - LLM/inference: vllm, tensorrt-llm, text-generation-inference, sglang, etc.\n\
-            - Training: deepspeed, megatron-lm, accelerate, fsdp, torchtitan, etc.\n\
-            - Data: datasets, datatrove, hub, MosaicML streaming, etc.\n\
-            \n\
-            Think: What projects would benefit MOST from this research? Be specific.\n\
-            - Use \\\\n to separate paragraphs\n\
-        11. Suggest tags and match to user's topics\n\
-        \n\
-        ===== JSON FORMAT EXAMPLE =====\n\
-        {{{{\n\
-          \"ai_summary\": \"Two to three sentences summarizing the paper without any line breaks\",\n\
-          \"key_insights\": [\n\
-            \"First key insight from the paper\",\n\
-            \"Second key insight\",\n\
-            \"Third key insight\",\n\
-            \"Fourth key insight\",\n\
-            \"Fifth key insight\"\n\
-          ],\n\
-          \"novelty_score\": 8,\n\
-          \"novelty_reason\": \"Explanation of why this score was given\",\n\
-          \"effectiveness_score\": 7,\n\
-          \"effectiveness_reason\": \"Explanation of effectiveness\",\n\
-          \"experiment_completeness_score\": 9,\n\
-          \"experiment_completeness_reason\": \"Evaluation comprehensiveness explanation\",\n\
-          \"code_available\": true,\n\
-          \"code_links\": [\"https://github.com/username/repo\"],\n\
-          \"algorithm_flowchart\": \"graph TD\\\\nA[Input] --> B[Process]\\\\nB --> C[Output]\",\n\
-          \"time_complexity\": \"O(n log n) explanation\",\n\
-          \"space_complexity\": \"O(n) explanation\",\n\
-          \"engineering_notes\": \"Target projects: Identify MOST relevant repos based on paper's domain. Module: Specify which component. How: Describe integration approach. Challenges: List technical hurdles. Production: Note deployment concerns. Example: 'For this LLM optimization, consider contributing to vllm - add to vllm/attention/ as new attention kernel. Must ensure compatibility with existing paged attention cache. Production: Consider CUDA kernel memory usage and multi-GPU scaling.' Use \\\\n for paragraphs.\",\n\
-          \"suggested_tags\": [\"tag1\", \"tag2\", \"tag3\"],\n\
-          \"suggested_topics\": [\"topic1\", \"topic2\"]\n\
-        }}}}",
-        language_instruction, topics_json, title, summary, latex
+        "\n\n===== LANGUAGE REQUIREMENTS =====\n\
+        - Respond in Chinese (中文) for: ai_summary, key_insights, novelty_reason, effectiveness_reason{}engineering_notes\n\
+        - Keep in ENGLISH for: code_links (repo names, URLs), suggested_tags, suggested_topics\n\
+        - Engineering notes: Describe in Chinese, but keep project/framework names in English (e.g., verl, vllm, tensorrt-llm)\n\
+        {}\
+        - Tags and topics must be technical terms in English (e.g., \"reinforcement-learning\", \"LLM\", \"transformer\")",
+        if has_experiments { ", experiment_completeness_reason" } else { "" },
+        if has_complexity {
+            "- Complexity notation: Use LaTeX/O notation in English (e.g., O(n log n)), but explanation in Chinese\n"
+        } else {
+            ""
+        }
     )
+}
+
+/// Build content section based on depth
+fn build_content_section(latex_content: Option<&str>, depth: AnalysisDepth) -> String {
+    match (depth, latex_content) {
+        (AnalysisDepth::Standard, Some(latex)) => {
+            let intro = crate::latex_parser::extract_intro_conclusion(latex);
+            format!(
+                "LaTeX Content (Introduction + Conclusion, truncated to 15000 chars):\n{}",
+                intro.chars().take(15000).collect::<String>()
+            )
+        }
+        (AnalysisDepth::Standard, None) => {
+            "LaTeX Content: Not available - using abstract only".to_string()
+        }
+        (AnalysisDepth::Full, Some(latex)) => {
+            format!("Full LaTeX Content:\n{}", latex)
+        }
+        (AnalysisDepth::Full, None) => {
+            "LaTeX Content: Not available - using abstract only".to_string()
+        }
+    }
+}
+
+/// Build format requirements for specific blocks
+fn build_format_requirements(blocks: &[AnalysisBlockConfig], depth: AnalysisDepth) -> String {
+    let has_flowchart = blocks.iter().any(|b| b.id == "flowchart");
+    let is_full = depth == AnalysisDepth::Full;
+
+    let mut requirements = String::new();
+
+    if is_full {
+        requirements.push_str("6. Double-check commas between array elements\n");
+        if has_flowchart {
+            requirements.push_str("7. algorithm_flowchart: Provide PLAIN mermaid code WITHOUT any markdown wrappers\n");
+        }
+    }
+
+    requirements
+}
+
+/// Build analysis tasks section from enabled blocks
+fn build_tasks_section(blocks: &[AnalysisBlockConfig]) -> String {
+    let mut tasks = Vec::new();
+    let mut task_num = 1;
+
+    // Sort blocks by order
+    let mut sorted_blocks = blocks.to_vec();
+    sorted_blocks.sort_by_key(|b| b.order);
+
+    for block in &sorted_blocks {
+        let task = get_block_task_instruction(block);
+        if !task.is_empty() {
+            tasks.push(format!("{}. {}", task_num, task));
+            task_num += 1;
+        }
+    }
+
+    tasks.join("\n")
+}
+
+/// Get task instruction for a specific block
+fn get_block_task_instruction(block: &AnalysisBlockConfig) -> &'static str {
+    match block.id.as_str() {
+        "ai_summary" => "Provide 2-3 sentence summary of the paper's core contributions",
+        "topics" => "Suggest relevant tags and match the paper to user's research topics",
+        "key_insights" => "Extract 5-7 key insights or contributions from the paper (each as a separate array element)",
+        "quality_assessment" => {
+            if block.supported_modes.contains(&crate::analysis::AnalysisDepth::Full) {
+                "Rate the paper on three dimensions (0-10 scale): novelty (how original/new), effectiveness (how well it works), and experiment completeness (comprehensive evaluation)"
+            } else {
+                "Rate the paper on two dimensions (0-10 scale): novelty (how original/new) and effectiveness (how well it works)"
+            }
+        }
+        "code_links" => "Check for code availability: extract GitHub links, code repository mentions, and official implementation references",
+        "engineering_notes" => {
+            "Provide detailed engineering notes for ENGINEERS who want to apply/contribute:\n\
+             MUST include ALL of the following aspects:\n\
+             - SPECIFIC open source projects (analyze the paper and identify relevant active projects)\n\
+             - WHICH module to contribute to (e.g., scheduling module, attention kernel, data loader)\n\
+             - HOW to contribute (e.g., add this algorithm as an option, integrate optimization)\n\
+             - Implementation challenges (e.g., numerical stability, memory overhead, distributed sync)\n\
+             - Production considerations (e.g., scalability, latency, resource requirements, monitoring)\n\
+             \n\
+             Reference examples by domain:\n\
+             - RL: verl, slime, cleanrl, tianshou, ray/rllib, etc.\n\
+             - LLM/inference: vllm, tensorrt-llm, text-generation-inference, sglang, etc.\n\
+             - Training: deepspeed, megatron-lm, accelerate, fsdp, torchtitan, etc.\n\
+             - Data: datasets, datatrove, hub, MosaicML streaming, etc.\n\
+             \n\
+             Think: What projects would benefit MOST from this research? Be specific.\n\
+             Use \\\\n to separate paragraphs."
+        }
+        "related_papers" => {
+            "Identify related papers by analyzing references and citations:\n\
+             - Look for papers that this work builds upon or improves\n\
+             - Identify competing or alternative approaches\n\
+             - Find papers with similar methodology or goals\n\
+             For each related paper, provide: arXiv ID, title, relationship type (builds_on/improves_upon/competing_with/similar_to), relevance score (0-10), and brief reason"
+        }
+        "algorithms" => "Extract key algorithms presented in the paper: for each algorithm, provide the name, a step-by-step description, and computational complexity if specified",
+        "complexity" => "Analyze computational complexity: provide time complexity (big-O notation for runtime) and space complexity (memory usage) with explanations",
+        "flowchart" => "Generate a Mermaid flowchart diagram showing the algorithm's workflow: use nodes for steps, arrows for data flow, and keep it on one line without markdown wrappers",
+        "formulas" => "Extract important mathematical formulas from the paper: provide each formula in LaTeX notation with a descriptive name and explanation",
+        _ => "",
+    }
+}
+
+/// Build JSON schema from enabled blocks
+fn build_json_schema(blocks: &[AnalysisBlockConfig]) -> String {
+    let mut schema_parts = Vec::new();
+    let mut sorted_blocks = blocks.to_vec();
+    sorted_blocks.sort_by_key(|b| b.order);
+
+    for block in &sorted_blocks {
+        let schema = get_block_json_schema(block);
+        if !schema.is_empty() {
+            schema_parts.push(schema);
+        }
+    }
+
+    schema_parts.join(",\n  ")
+}
+
+/// Get JSON schema for a specific block
+fn get_block_json_schema(block: &AnalysisBlockConfig) -> String {
+    match block.output_schema {
+        OutputSchema::SingleString => {
+            match block.id.as_str() {
+                "ai_summary" => r#""ai_summary": "Concise 2-3 sentence summary without line breaks""#,
+                "engineering_notes" => r#""engineering_notes": "Target projects: Identify MOST relevant repos based on paper's domain. Module: Specify which component. How: Describe integration approach. Challenges: List technical hurdles. Production: Note deployment concerns. Use \\\\n for paragraphs.""#,
+                "complexity" => r#""time_complexity": "O(n log n) with explanation",
+  "space_complexity": "O(n) with explanation""#,
+                _ => "",
+            }
+        }
+        OutputSchema::StringArray => {
+            match block.id.as_str() {
+                "topics" => r#""suggested_tags": ["tag1", "tag2", "tag3"],
+  "suggested_topics": ["topic1", "topic2"]"#,
+                "key_insights" => r#""key_insights": [
+    "First key insight from the paper",
+    "Second key insight",
+    "Third key insight",
+    "Fourth key insight",
+    "Fifth key insight"
+  ]"#,
+                _ => "",
+            }
+        }
+        OutputSchema::StructuredQuality => {
+            // Check if full mode (has experiment completeness)
+            if block.supported_modes.contains(&crate::analysis::AnalysisDepth::Full) {
+                r#""novelty_score": 8,
+  "novelty_reason": "Explanation of why this score was given",
+  "effectiveness_score": 7,
+  "effectiveness_reason": "Explanation of effectiveness",
+  "experiment_completeness_score": 9,
+  "experiment_completeness_reason": "Evaluation comprehensiveness explanation""#
+            } else {
+                r#""novelty_score": 8,
+  "novelty_reason": "Explanation of why this score was given",
+  "effectiveness_score": 7,
+  "effectiveness_reason": "Explanation of effectiveness""#
+            }
+        }
+        OutputSchema::CodeLinks => {
+            r#""code_available": true,
+  "code_links": ["https://github.com/username/repo"]"#
+        }
+        OutputSchema::Flowchart => {
+            r#""algorithm_flowchart": "graph TD\\\\nA[Input] --> B[Process]\\\\nB --> C[Output]""#
+        }
+        OutputSchema::FormulaList => {
+            r#""key_formulas": [
+    {
+      "latex": "E = mc^2",
+      "name": "Mass-energy equivalence",
+      "description": "Relationship between energy and mass"
+    }
+  ]"#
+        }
+        OutputSchema::PaperReferenceList => {
+            r#""related_papers": [
+    {
+      "arxivId": "2301.12345",
+      "title": "Related Paper Title",
+      "relationship": "builds_on",
+      "relevanceScore": 8,
+      "reason": "This paper extends the method proposed in the cited work"
+    }
+  ]"#
+        }
+        OutputSchema::AlgorithmList => {
+            r#""algorithms": [
+    {
+      "name": "Algorithm Name",
+      "steps": ["Step 1 description", "Step 2 description", "Step 3 description"],
+      "complexity": "O(n log n)"
+    }
+  ]"#
+        }
+    }.to_string()
 }

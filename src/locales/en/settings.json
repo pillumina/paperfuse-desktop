@@ -5,6 +5,7 @@
     "apiKeys": "API Keys",
     "topics": "Topics",
     "arxivCategories": "ArXiv Categories",
+    "analysis": "Analysis",
     "deepAnalysis": "Deep Analysis",
     "llmRetry": "LLM Retry",
     "schedule": "Schedule",
@@ -345,5 +346,84 @@
     "papersSaved": "Saved",
     "papersFiltered": "Filtered",
     "savedPapers": "Saved Papers"
+  },
+  "analysis": {
+    "title": "Analysis Configuration",
+    "description": "Customize which analysis modules are enabled for paper analysis",
+    "saved": "Analysis configuration saved successfully!",
+    "savedDescription": "Your analysis preferences have been updated.",
+    "saveChanges": "Save Changes",
+    "saving": "Saving...",
+    "cancel": "Cancel",
+    "categories": {
+      "basic": {
+        "title": "Basic Modules",
+        "description": "Always enabled core analysis"
+      },
+      "core": {
+        "title": "Core Analysis",
+        "description": "Main analysis outputs"
+      },
+      "technical": {
+        "title": "Technical Details",
+        "description": "In-depth technical analysis (Full mode)"
+      },
+      "engineering": {
+        "title": "Engineering",
+        "description": "Implementation details"
+      }
+    },
+    "blocks": {
+      "ai_summary": {
+        "name": "AI Summary",
+        "description": "Concise 2-3 sentence summary of the paper's core contributions"
+      },
+      "topics": {
+        "name": "Topic Classification",
+        "description": "Classify paper into research topics and suggest relevant tags"
+      },
+      "key_insights": {
+        "name": "Key Insights",
+        "description": "Extract 5-7 key insights or contributions from the paper"
+      },
+      "quality_assessment": {
+        "name": "Quality Assessment",
+        "description": "Rate novelty (0-10), effectiveness (0-10), and experiment completeness (0-10)"
+      },
+      "code_links": {
+        "name": "Code Links",
+        "description": "Extract GitHub links and code references from the paper"
+      },
+      "engineering_notes": {
+        "name": "Engineering Notes",
+        "description": "Detailed engineering insights: target projects, integration approach, challenges, production concerns"
+      },
+      "related_papers": {
+        "name": "Related Papers",
+        "description": "Identify papers that build on, improve, or relate to this work"
+      },
+      "algorithms": {
+        "name": "Algorithms",
+        "description": "Extract key algorithms with names, complexity, and step-by-step descriptions"
+      },
+      "complexity": {
+        "name": "Complexity Analysis",
+        "description": "Analyze time complexity and space complexity with big-O notation"
+      },
+      "flowchart": {
+        "name": "Algorithm Flowchart",
+        "description": "Generate Mermaid flowchart code showing the algorithm's workflow"
+      },
+      "formulas": {
+        "name": "Key Formulas",
+        "description": "Extract important mathematical formulas with LaTeX notation and descriptions"
+      }
+    },
+    "modes": {
+      "standard": "Standard",
+      "full": "Full",
+      "both": "Both"
+    },
+    "infoText": "Changes to analysis configuration will apply to newly analyzed papers. Existing papers will not be affected."
   }
 }

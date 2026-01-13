@@ -5,6 +5,50 @@
 export type PaperTag = string;
 export type AnalysisDepth = 'none' | 'basic' | 'standard' | 'full';
 
+// Analysis block types for modular configuration
+export type BlockDepth = 'standard' | 'full';
+export type BlockRunMode = 'standard' | 'full' | 'both';
+
+export type BlockCategory = 'basic' | 'core' | 'technical' | 'engineering';
+
+export type OutputSchema =
+  | 'single_string'
+  | 'string_array'
+  | 'structured_quality'
+  | 'algorithm_list'
+  | 'formula_list'
+  | 'flowchart'
+  | 'paper_reference_list'
+  | 'code_links';
+
+export interface I18nText {
+  en: string;
+  zh: string;
+}
+
+export interface AnalysisBlockConfig {
+  id: string;
+  name: I18nText;
+  description: I18nText;
+  category: BlockCategory;
+  defaultEnabled: boolean;
+  supportedModes: BlockDepth[];
+  defaultMode: BlockRunMode;
+  order: number;
+  dependsOn?: string[];
+  outputSchema: OutputSchema;
+}
+
+export interface UserBlockConfig {
+  blockId: string;
+  enabled: boolean;
+  mode: BlockRunMode;
+}
+
+export interface UserAnalysisConfig {
+  blocks: UserBlockConfig[];
+}
+
 export interface AuthorInfo {
   name: string;
   affiliation: string | null;
@@ -54,6 +98,7 @@ export interface Paper {
   space_complexity: string | null;
   analysis_mode: 'standard' | 'full' | null;
   analysis_incomplete: boolean;
+  related_papers?: RelatedPaper[];
 }
 
 export interface KeyFormula {
@@ -71,6 +116,21 @@ export interface Algorithm {
 export interface FlowDiagram {
   format: 'mermaid' | 'text';
   content: string;
+}
+
+export type PaperRelationship =
+  | 'builds_on'
+  | 'improves_upon'
+  | 'competing_with'
+  | 'cited_by'
+  | 'similar_to';
+
+export interface RelatedPaper {
+  arxivId: string;
+  title: string;
+  relationship: PaperRelationship;
+  relevanceScore: number;
+  reason: string;
 }
 
 // ============================================

@@ -162,6 +162,7 @@
     "codeResources": "代码与资源",
     "keyFormulas": "关键公式",
     "keyAlgorithms": "关键算法",
+    "relatedPapers": "相关论文",
     "flowDiagram": "流程图",
     "methodOverview": "方法概览",
     "quality": {
@@ -222,6 +223,17 @@
       "analysisDeep": "深度",
       "analysisQuick": "快速",
       "code": "代码"
+    },
+    "relatedPapers": {
+      "relationship": {
+        "builds_on": "基于",
+        "improves_upon": "改进了",
+        "competing_with": "竞争关系",
+        "cited_by": "被引用于",
+        "similar_to": "类似"
+      },
+      "relevanceScore": "相关性：{{score}}/10",
+      "viewOnArxiv": "在 ArXiv 查看"
     },
     "steps": "步骤",
     "collections": {

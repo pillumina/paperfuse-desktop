@@ -162,6 +162,7 @@
     "codeResources": "Code & Resources",
     "keyFormulas": "Key Formulas",
     "keyAlgorithms": "Key Algorithms",
+    "relatedPapers": "Related Papers",
     "flowDiagram": "Flow Diagram",
     "methodOverview": "Method Overview",
     "quality": {
@@ -222,6 +223,17 @@
       "analysisDeep": "Deep",
       "analysisQuick": "Quick",
       "code": "Code"
+    },
+    "relatedPapers": {
+      "relationship": {
+        "builds_on": "Builds on",
+        "improves_upon": "Improves upon",
+        "competing_with": "Competing with",
+        "cited_by": "Cited by",
+        "similar_to": "Similar to"
+      },
+      "relevanceScore": "Relevance: {{score}}/10",
+      "viewOnArxiv": "View on ArXiv"
     },
     "steps": "Steps",
     "collections": {

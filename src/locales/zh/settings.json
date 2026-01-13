@@ -5,6 +5,7 @@
     "apiKeys": "API 密钥",
     "topics": "主题",
     "arxivCategories": "ArXiv 分类",
+    "analysis": "分析配置",
     "deepAnalysis": "深度分析",
     "llmRetry": "LLM 重试",
     "schedule": "定时任务",
@@ -345,5 +346,84 @@
     "papersSaved": "已保存",
     "papersFiltered": "已过滤",
     "savedPapers": "已保存论文"
+  },
+  "analysis": {
+    "title": "分析配置",
+    "description": "自定义论文分析时启用的分析模块",
+    "saved": "分析配置保存成功！",
+    "savedDescription": "您的分析偏好已更新。",
+    "saveChanges": "保存更改",
+    "saving": "保存中...",
+    "cancel": "取消",
+    "categories": {
+      "basic": {
+        "title": "基础模块",
+        "description": "始终启用的核心分析"
+      },
+      "core": {
+        "title": "核心分析",
+        "description": "主要分析输出"
+      },
+      "technical": {
+        "title": "技术细节",
+        "description": "深入技术分析（完整模式）"
+      },
+      "engineering": {
+        "title": "工程",
+        "description": "实现细节"
+      }
+    },
+    "blocks": {
+      "ai_summary": {
+        "name": "AI 摘要",
+        "description": "论文核心贡献的简洁摘要（2-3句话）"
+      },
+      "topics": {
+        "name": "主题分类",
+        "description": "将论文分类到研究主题并建议相关标签"
+      },
+      "key_insights": {
+        "name": "关键洞察",
+        "description": "从论文中提取 5-7 个关键洞察或贡献"
+      },
+      "quality_assessment": {
+        "name": "质量评估",
+        "description": "评估创新性 (0-10)、有效性 (0-10) 和实验完整性 (0-10)"
+      },
+      "code_links": {
+        "name": "代码链接",
+        "description": "从论文中提取 GitHub 链接和代码引用"
+      },
+      "engineering_notes": {
+        "name": "工程笔记",
+        "description": "详细工程洞察：目标项目、集成方法、技术挑战、生产环境考虑"
+      },
+      "related_papers": {
+        "name": "相关论文",
+        "description": "识别基于、改进或相关于此研究的论文"
+      },
+      "algorithms": {
+        "name": "算法提取",
+        "description": "提取关键算法，包括名称、复杂度和分步描述"
+      },
+      "complexity": {
+        "name": "复杂度分析",
+        "description": "使用大 O 表示法分析时间复杂度和空间复杂度"
+      },
+      "flowchart": {
+        "name": "算法流程图",
+        "description": "生成 Mermaid 流程图代码展示算法工作流程"
+      },
+      "formulas": {
+        "name": "关键公式",
+        "description": "提取重要的数学公式，包括 LaTeX 表示和描述"
+      }
+    },
+    "modes": {
+      "standard": "标准",
+      "full": "完整",
+      "both": "两者"
+    },
+    "infoText": "分析配置的更改将应用于新分析的论文。现有论文不受影响。"
   }
 }

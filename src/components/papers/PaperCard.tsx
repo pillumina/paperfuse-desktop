@@ -245,16 +245,16 @@ export function PaperCard({
               </div>
 
               {/* Footer - show relevance or category based on analysis status */}
-              <div className="flex items-center justify-between mt-auto pt-4 border-t border-gray-100 dark:border-gray-700">
+              <div className="flex flex-wrap items-center justify-between gap-2 mt-auto pt-4 border-t border-gray-100 dark:border-gray-700">
                 {hasDeepAnalysis ? (
                   // Deep analysis: show "Analyzed" + relevance score
                   <>
-                    <div className="flex items-center gap-1.5 text-sm text-gray-500">
-                      <Sparkles className="w-3.5 h-3.5" />
-                      <span>Deep analysis</span>
+                    <div className="flex items-center gap-1.5 text-sm text-gray-500 min-w-0">
+                      <Sparkles className="w-3.5 h-3.5 flex-shrink-0" />
+                      <span className="truncate">Deep analysis</span>
                     </div>
                     <span
-                      className={`px-3 py-1 rounded-full text-sm font-medium ${getScoreColor(
+                      className={`px-3 py-1 rounded-full text-sm font-medium whitespace-nowrap ${getScoreColor(
                         paper.filter_score
                       )}`}
                     >
@@ -264,31 +264,31 @@ export function PaperCard({
                 ) : hasQuickAnalysis ? (
                   // Quick analysis: show category + relevance score with different style
                   <>
-                    <div className="flex items-center gap-1.5 text-sm text-gray-500">
-                      <Tag className="w-3.5 h-3.5" />
-                      <span>{primaryCategory || 'Uncategorized'}</span>
+                    <div className="flex items-center gap-1.5 text-sm text-gray-500 min-w-0 flex-1">
+                      <Tag className="w-3.5 h-3.5 flex-shrink-0" />
+                      <span className="truncate">{primaryCategory || 'Uncategorized'}</span>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5 flex-shrink-0">
                       <span
-                        className={`px-3 py-1 rounded-full text-sm font-medium ${getScoreColor(
+                        className={`px-2.5 py-1 rounded-full text-sm font-medium whitespace-nowrap ${getScoreColor(
                           paper.filter_score
                         )}`}
                       >
                         {displayScore}/10
                       </span>
-                      <span className="px-2 py-1 rounded-full text-xs font-medium bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400">
-                        Quick
+                      <span className="px-2 py-1 rounded-full text-xs font-medium bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 whitespace-nowrap">
+                        Q
                       </span>
                     </div>
                   </>
                 ) : (
                   // No analysis: show primary category + "New" badge
                   <>
-                    <div className="flex items-center gap-1.5 text-sm text-gray-500">
-                      <Tag className="w-3.5 h-3.5" />
-                      <span>{primaryCategory || 'Uncategorized'}</span>
+                    <div className="flex items-center gap-1.5 text-sm text-gray-500 min-w-0">
+                      <Tag className="w-3.5 h-3.5 flex-shrink-0" />
+                      <span className="truncate">{primaryCategory || 'Uncategorized'}</span>
                     </div>
-                    <span className="px-3 py-1 rounded-full text-sm font-medium bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400">
+                    <span className="px-3 py-1 rounded-full text-sm font-medium bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 whitespace-nowrap">
                       New
                     </span>
                   </>

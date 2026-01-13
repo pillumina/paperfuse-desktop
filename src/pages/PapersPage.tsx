@@ -1438,6 +1438,7 @@ export default function PapersPage() {
         currentPaperTitle={analysisProgressDialog.currentPaperTitle}
         status={analysisProgressDialog.status}
         failed={analysisProgressDialog.failed}
+        onCancel={() => setAnalysisProgressDialog(prev => ({ ...prev, isOpen: false }))}
       />
     </div>
   );

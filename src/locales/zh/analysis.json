@@ -29,7 +29,8 @@
     "error": "分析错误",
     "papers": "篇论文",
     "summary": "共 {{total}} 篇，成功 {{analyzed}} 篇，失败 {{failed}} 篇",
-    "currentPaper": "当前论文："
+    "currentPaper": "当前论文：",
+    "cancel": "取消"
   },
   "reanalyze": "重新分析"
 }

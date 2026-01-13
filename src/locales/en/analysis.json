@@ -29,7 +29,8 @@
     "error": "Analysis Error",
     "papers": "papers",
     "summary": "{{analyzed}} successfully analyzed, {{failed}} failed out of {{total}}",
-    "currentPaper": "Current Paper:"
+    "currentPaper": "Current Paper:",
+    "cancel": "Cancel"
   },
   "reanalyze": "Re-analyze"
 }

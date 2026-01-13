@@ -10,6 +10,3 @@ pub use settings::{
     compute_topics_hash,
 };
 pub use collection::{Collection, CollectionWithPaperCount, CreateCollection, UpdateCollection};
-
-// Re-export fetch history types from database module
-pub use crate::database::{FetchHistoryEntry, PaperSummary};

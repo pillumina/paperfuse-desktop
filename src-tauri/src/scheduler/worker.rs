@@ -3,6 +3,8 @@
 //! This module provides the worker that runs when triggered by launchd
 //! for scheduled paper fetching without UI interaction.
 
+#![allow(dead_code)]
+
 use crate::database::SettingsRepository;
 use crate::fetch::FetchManager;
 use crate::models::{FetchOptions, LLMProvider, ScheduleRun, ScheduleRunStatus};

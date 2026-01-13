@@ -12,9 +12,33 @@ mod fetch;
 mod scheduler;
 mod latex_parser;
 
-pub use models::*;
-pub use commands::*;
-pub use database::*;
+// Re-export specific types instead of glob to avoid ambiguity
+pub use models::{
+    Paper, ArxivPaper, AuthorInfo, KeyFormula, Algorithm, FlowDiagram,
+    Settings, LLMProvider, ScheduleFrequency, TopicConfig,
+    FetchOptions, FetchResult, FetchStatus, FetchStatusState,
+    ScheduleStatus, ScheduleRun, ScheduleRunStatus,
+    Collection, CollectionWithPaperCount, CreateCollection, UpdateCollection,
+    compute_topics_hash,
+};
+
+// Re-export commands
+pub use commands::{
+    get_papers, get_paper_by_id, search_papers, get_papers_by_tag,
+    get_paper_count, save_paper, delete_paper, batch_delete_papers, get_tags_with_counts,
+    get_spam_papers, get_spam_paper_count, toggle_paper_spam,
+    analyze_paper, batch_analyze_papers,
+    get_settings, save_settings, get_setting, set_setting,
+    get_cache_stats, clear_cache,
+    start_fetch, get_fetch_status, is_fetching, cancel_fetch,
+    get_fetch_history, delete_fetch_history_entry,
+    enable_schedule, disable_schedule, get_schedule_status,
+    trigger_scheduled_fetch_now, get_schedule_history,
+    create_collection, get_collections, get_collection, update_collection,
+    delete_collection, add_paper_to_collection, remove_paper_from_collection,
+    get_collection_papers, get_paper_collections,
+    FetchManagerState, SchedulerState,
+};
 
 /// Application state
 pub struct AppState {

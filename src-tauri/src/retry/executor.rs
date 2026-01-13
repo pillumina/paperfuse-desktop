@@ -9,7 +9,7 @@ use crate::llm::LlmError;
 use crate::models::LLMProvider;
 use crate::models::settings::RetryConfig;
 use crate::retry::classifier::ErrorClassifier;
-use crate::retry::policy::{RetryDecision, RetryableError};
+use crate::retry::policy::RetryableError;
 use crate::retry::strategy::{calculate_backoff, has_time_budget};
 
 /// Retry execution engine

@@ -767,7 +767,7 @@ impl FetchManager {
 
         // LLM analysis (if available)
         let mut analyzed = false;
-        let mut filtered = false;
+        let filtered = false;
         let mut cache_hit = false;
 
         if let Some(client) = llm_client {
@@ -790,7 +790,6 @@ impl FetchManager {
             // Check relevance threshold - skip filtering in fetch-by-ID mode
             // since user explicitly requested these papers
             if !options.fetch_by_id && relevance_result.result.score < options.min_relevance {
-                filtered = true;
                 return Ok(ProcessedPaperResult {
                     analyzed: true,
                     saved: false,
@@ -1332,7 +1331,7 @@ impl FetchManager {
 
         } else {
             // Sync mode: process papers sequentially (existing behavior)
-            for (i, entry) in entries.iter().enumerate() {
+            for entry in entries.iter() {
                 // Check for cancellation before processing each paper
                 if cancel_token.is_cancelled() {
                     return Err(FetchError::Cancelled);

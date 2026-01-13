@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use crate::models::{Paper, AuthorInfo};
 use sqlx::{SqlitePool, Row};
 use thiserror::Error;

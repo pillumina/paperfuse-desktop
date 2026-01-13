@@ -3,6 +3,8 @@
 //! Stores classification results keyed by (arxiv_id, topics_hash).
 //! When topics configuration changes, old cache entries become invalid.
 
+#![allow(dead_code)]
+
 use crate::llm::ClassificationResult;
 use crate::models::{TopicConfig, compute_topics_hash};
 use sqlx::{SqlitePool, Row};

@@ -9,9 +9,9 @@ pub mod fetch_history;
 
 pub use papers::{PaperRepository, PaperError};
 pub use settings::SettingsRepository;
-pub use classification_cache::{ClassificationCacheRepository, CacheError};
+pub use classification_cache::ClassificationCacheRepository;
 pub use collections::CollectionRepository;
-pub use fetch_history::{FetchHistoryRepository, FetchHistoryError, FetchHistoryEntry, PaperSummary};
+pub use fetch_history::{FetchHistoryRepository, FetchHistoryEntry, PaperSummary};
 
 /// Get the path to the SQLite database file
 /// Uses the application data directory on macOS:

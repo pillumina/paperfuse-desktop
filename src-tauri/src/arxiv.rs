@@ -1,5 +1,7 @@
 //! ArXiv API client for fetching research papers
 
+#![allow(dead_code)]
+
 use chrono::{DateTime, Utc};
 use quick_xml::events::Event;
 use thiserror::Error;

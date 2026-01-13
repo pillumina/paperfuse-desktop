@@ -3,6 +3,8 @@
 //! This module provides functionality for creating, installing, and managing
 //! launchd plist files for background scheduled execution.
 
+#![allow(dead_code)]
+
 use crate::models::{ScheduleFrequency, Settings};
 use std::fs;
 use std::path::PathBuf;

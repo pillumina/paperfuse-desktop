@@ -1,6 +1,8 @@
 //! LLM client for paper classification and analysis
 //! Supports GLM (ZhipuAI) and Claude (Anthropic) APIs
 
+#![allow(dead_code)]
+
 use crate::models::{LLMProvider, TopicConfig};
 use crate::models::settings::RetryConfig;
 use reqwest::Client;

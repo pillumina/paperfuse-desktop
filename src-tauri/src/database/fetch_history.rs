@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use sqlx::{SqlitePool, Row};
 use thiserror::Error;
 use serde::{Deserialize, Serialize};

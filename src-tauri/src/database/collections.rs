@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use crate::models::collection::{Collection, CollectionWithPaperCount, CreateCollection, UpdateCollection};
 use sqlx::{SqlitePool, Row};
 use chrono::Utc;
@@ -84,19 +86,15 @@ impl CollectionRepository {
 
         // Build dynamic update query
         let mut query = String::from("UPDATE collections SET updated_at = ?");
-        let mut bind_count = 1;
 
         if updates.name.is_some() {
             query.push_str(", name = ?");
-            bind_count += 1;
         }
         if updates.description.is_some() {
             query.push_str(", description = ?");
-            bind_count += 1;
         }
         if updates.color.is_some() {
             query.push_str(", color = ?");
-            bind_count += 1;
         }
 
         query.push_str(" WHERE id = ?");

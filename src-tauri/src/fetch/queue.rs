@@ -3,6 +3,8 @@
 //! Provides a channel-based queue with semaphore-based concurrency control
 //! for processing multiple papers concurrently.
 
+#![allow(dead_code)]
+
 use crate::arxiv::ArxivEntry;
 use std::sync::Arc;
 use tokio::sync::{mpsc, Semaphore};

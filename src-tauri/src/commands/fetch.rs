@@ -1,6 +1,6 @@
 //! Tauri commands for paper fetching operations
 
-use crate::database::{FetchHistoryEntry, FetchHistoryRepository, PaperSummary};
+use crate::database::{FetchHistoryEntry, FetchHistoryRepository};
 use crate::fetch::{FetchError, FetchManager};
 use crate::models::{FetchOptions, FetchStatus, TopicConfig};
 use serde::Serialize;

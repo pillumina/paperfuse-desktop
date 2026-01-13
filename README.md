@@ -1,17 +1,28 @@
 # PaperFuse Desktop
 
-<div align="center">
+<p align="center">
+  <img src="assets/banner.svg" alt="PaperFuse Desktop Banner">
+</p>
 
-**A macOS desktop application for automated research paper discovery and AI-powered analysis**
+<p align="center">
+  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
+  <a href="https://github.com/pillumina/paperfuse-desktop"><img src="https://img.shields.io/badge/macOS-14%2B-blue" alt="macOS"></a>
+  <a href="https://tauri.app/"><img src="https://img.shields.io/badge/Tauri-2.0-FFC131?logo=tauri&logoColor=000" alt="Tauri"></a>
+  <a href="https://react.dev/"><img src="https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=000" alt="React"></a>
+</p>
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![macOS](https://img.shields.io/badge/macOS-14%2B-blue)](https://github.com/pillumina/paperfuse-desktop)
-[![Tauri](https://img.shields.io/badge/Tauri-2.0-FFC131?logo=tauri&logoColor=000)](https://tauri.app/)
-[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=000)](https://react.dev/)
+<p align="center">
+  <i>A macOS desktop application for automated research paper discovery and AI-powered analysis</i>
+</p>
 
-[Features](#features) • [Installation](#installation) • [Quick Start](#quick-start) • [Development](#development)
+<p align="center">
+  <a href="#features">Features</a> •
+  <a href="#installation">Installation</a> •
+  <a href="#quick-start">Quick Start</a> •
+  <a href="#development">Development</a>
+</p>
 
-</div>
+---
 
 ---
 

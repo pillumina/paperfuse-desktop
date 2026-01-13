@@ -1,12 +1,30 @@
-import { CheckCircle, XCircle, Clock, XCircleIcon, AlertCircle } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, XCircleIcon, AlertCircle, Trash2 } from 'lucide-react';
 import { useFetchHistory } from '../../hooks/useFetchHistory';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { useQueryClient } from '@tanstack/react-query';
+import { invoke } from '@tauri-apps/api/core';
 import { useState } from 'react';
 
 export function FetchHistorySection() {
   const { t } = useLanguage();
+  const queryClient = useQueryClient();
   const { data: history, isLoading, error } = useFetchHistory({ limit: 50 });
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const handleDelete = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setDeletingId(id);
+    try {
+      await invoke('delete_fetch_history_entry', { id });
+      // Invalidate and refetch fetch history
+      queryClient.invalidateQueries({ queryKey: ['fetch-history'] });
+    } catch (error) {
+      console.error('Failed to delete fetch history entry:', error);
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -117,7 +135,7 @@ export function FetchHistorySection() {
         {history.map((entry) => (
           <div
             key={entry.id}
-            className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden"
+            className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden group"
           >
             {/* Header - always visible */}
             <div
@@ -125,7 +143,7 @@ export function FetchHistorySection() {
               onClick={() => setExpandedId(expandedId === entry.id ? null : entry.id)}
             >
               <div className="flex items-start justify-between">
-                <div className="flex items-start gap-3 flex-1">
+                <div className="flex items-start gap-3 flex-1 min-w-0">
                   {getStatusIcon(entry.status)}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
@@ -167,8 +185,23 @@ export function FetchHistorySection() {
                   </div>
                 </div>
 
-                {/* Expand indicator */}
-                <div className="ml-2">
+                {/* Actions */}
+                <div className="flex items-center gap-2 ml-2">
+                  {/* Delete button */}
+                  <button
+                    onClick={(e) => handleDelete(entry.id, e)}
+                    disabled={deletingId === entry.id}
+                    className="p-1.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors opacity-0 group-hover:opacity-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                    title={t('settings.fetchHistory.deleteEntry')}
+                  >
+                    {deletingId === entry.id ? (
+                      <Clock className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="w-4 h-4" />
+                    )}
+                  </button>
+
+                  {/* Expand indicator */}
                   <svg
                     className={`w-5 h-5 text-gray-400 transition-transform ${
                       expandedId === entry.id ? 'transform rotate-180' : ''

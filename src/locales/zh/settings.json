@@ -318,6 +318,7 @@
     "loading": "加载获取历史中...",
     "error": "加载获取历史失败",
     "noHistory": "暂无获取历史",
+    "deleteEntry": "删除此条目",
     "status": {
       "completed": "已完成",
       "failed": "失败",

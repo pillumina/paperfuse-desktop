@@ -174,4 +174,14 @@ impl FetchHistoryRepository {
     pub async fn get_recent(&self, limit: i32) -> Result<Vec<FetchHistoryEntry>> {
         self.get_all(Some(limit)).await
     }
+
+    /// Delete a fetch history entry by ID
+    pub async fn delete(&self, id: &str) -> Result<()> {
+        sqlx::query("DELETE FROM fetch_history WHERE id = ?")
+            .bind(id)
+            .execute(&self.pool)
+            .await?;
+
+        Ok(())
+    }
 }

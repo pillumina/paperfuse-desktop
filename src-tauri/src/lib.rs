@@ -88,6 +88,7 @@ pub fn run() {
             is_fetching,
             cancel_fetch,
             get_fetch_history,
+            delete_fetch_history_entry,
             // Schedule commands
             enable_schedule,
             disable_schedule,

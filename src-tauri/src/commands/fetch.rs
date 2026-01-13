@@ -174,6 +174,18 @@ pub async fn get_fetch_history(
         .map_err(|e| e.to_string())
 }
 
+/// Delete a fetch history entry
+#[tauri::command]
+pub async fn delete_fetch_history_entry(
+    pool: State<'_, SqlitePool>,
+    id: String,
+) -> Result<(), String> {
+    let repo = FetchHistoryRepository::new(pool.inner());
+    repo.delete(&id)
+        .await
+        .map_err(|e| e.to_string())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

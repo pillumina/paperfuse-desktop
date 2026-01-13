@@ -318,6 +318,7 @@
     "loading": "Loading fetch history...",
     "error": "Failed to load fetch history",
     "noHistory": "No fetch history available",
+    "deleteEntry": "Delete this entry",
     "status": {
       "completed": "Completed",
       "failed": "Failed",

@@ -15,7 +15,8 @@
     "next": "下一页",
     "previous": "上一页",
     "loading": "加载中...",
-    "saveChanges": "保存更改"
+    "saveChanges": "保存更改",
+    "done": "完成"
   },
   "labels": {
     "loading": "加载中...",

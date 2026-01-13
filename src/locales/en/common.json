@@ -15,7 +15,8 @@
     "next": "Next",
     "previous": "Previous",
     "loading": "Loading...",
-    "saveChanges": "Save Changes"
+    "saveChanges": "Save Changes",
+    "done": "Done"
   },
   "labels": {
     "loading": "Loading...",

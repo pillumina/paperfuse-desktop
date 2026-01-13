@@ -399,8 +399,8 @@ export default function PapersPage() {
     }
   };
 
-  const handleAnalyze = async (id: string, mode: AnalysisMode, _language: AnalysisLanguage) => {
-    console.log('[PapersPage] handleAnalyze called with id:', id, 'mode:', mode);
+  const handleAnalyze = async (id: string, mode: AnalysisMode, language: AnalysisLanguage) => {
+    console.log('[PapersPage] handleAnalyze called with id:', id, 'mode:', mode, 'language:', language);
 
     // Find the paper to get its title for progress display
     const paper = papers?.find(p => p.id === id);
@@ -420,10 +420,12 @@ export default function PapersPage() {
       console.log('[PapersPage] Calling analyze_paper with:', {
         paperId: id,
         analysisMode: mode,
+        analysisLanguage: language,
       });
       const result = await invoke('analyze_paper', {
         paperId: id,
         analysisMode: mode,
+        analysisLanguage: language,
       });
       console.log('[PapersPage] Analysis successful, result:', result);
 
@@ -581,13 +583,13 @@ export default function PapersPage() {
     }
   };
 
-  const handleAnalysisConfirm = async (mode: AnalysisMode, _language: AnalysisLanguage) => {
+  const handleAnalysisConfirm = async (mode: AnalysisMode, language: AnalysisLanguage) => {
     if (selectedPaperIds.size === 0) return;
 
     const paperIds = Array.from(selectedPaperIds);
     const total = paperIds.length;
 
-    console.log('[PapersPage] Starting batch analysis:', { total, mode });
+    console.log('[PapersPage] Starting batch analysis:', { total, mode, language });
 
     // Get titles for progress display
     const selectedPapers = papers?.filter(p => paperIds.includes(p.id)) || [];
@@ -622,6 +624,7 @@ export default function PapersPage() {
           await invoke('analyze_paper', {
             paperId,
             analysisMode: mode,
+            analysisLanguage: language,
           });
         } catch (error) {
           console.error(`[PapersPage] Failed to analyze paper ${paperId}:`, error);

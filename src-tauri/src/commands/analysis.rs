@@ -27,13 +27,15 @@ pub async fn analyze_paper(
     paperId: String,
     #[allow(non_snake_case)]
     analysisMode: String,
+    #[allow(non_snake_case)]
+    analysisLanguage: Option<String>,
 ) -> Result<Paper, String> {
-    // Default to Chinese for now
-    let analysis_language = "zh";
+    // Use provided language or default to Chinese
+    let analysis_language = analysisLanguage.as_deref().unwrap_or("zh");
     eprintln!("[analyze_paper] ENTRY - Received parameters:");
     eprintln!("  paperId: {:?}", paperId);
     eprintln!("  analysisMode: {:?}", analysisMode);
-    eprintln!("  analysis_language: {} (default)", analysis_language);
+    eprintln!("  analysisLanguage: {:?}", analysisLanguage);
     eprintln!("[analyze_paper] Starting analysis for paper: {} (mode: {}, language: {})", paperId, analysisMode, analysis_language);
 
     // Convert to snake_case for internal use
@@ -210,13 +212,16 @@ pub async fn batch_analyze_papers(
     paperIds: Vec<String>,
     #[allow(non_snake_case)]
     analysisMode: String,
+    #[allow(non_snake_case)]
+    analysisLanguage: Option<String>,
 ) -> Result<BatchAnalysisResult, String> {
-    // Default to Chinese for now
-    let analysis_language = "zh";
+    // Use provided language or default to Chinese
+    let analysis_language = analysisLanguage.as_deref().unwrap_or("zh");
     eprintln!("[batch_analyze_papers] ENTRY - Received parameters:");
     eprintln!("  paperIds: {:?}", paperIds);
     eprintln!("  analysisMode: {:?}", analysisMode);
-    eprintln!("  analysis_language: {} (default)", analysis_language);
+    eprintln!("  analysisLanguage: {:?}", analysisLanguage);
+    eprintln!("  analysis_language: {}", analysis_language);
 
     // Convert to snake_case for internal use
     let paper_ids = paperIds;
@@ -231,7 +236,7 @@ pub async fn batch_analyze_papers(
         eprintln!("[batch_analyze_papers] Processing {}/{}: {}",
             index + 1, total, paper_id);
 
-        match analyze_paper(pool.clone(), paper_id.clone(), analysis_mode.clone()).await {
+        match analyze_paper(pool.clone(), paper_id.clone(), analysis_mode.clone(), analysisLanguage.clone()).await {
             Ok(_) => {
                 successful += 1;
                 eprintln!("[batch_analyze_papers] Successfully analyzed: {}", paper_id);

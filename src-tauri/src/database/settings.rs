@@ -100,15 +100,7 @@ impl SettingsRepository {
             }
         }
 
-        println!("[SettingsRepository::get_all] Returning settings: provider={:?}, has_glm_key={}, has_claude_key={}, topics_count={}",
-            settings.llm_provider,
-            settings.glm_api_key.is_some(),
-            settings.claude_api_key.is_some(),
-            settings.topics.len()
-        );
-        for (i, topic) in settings.topics.iter().enumerate() {
-            println!("[SettingsRepository::get_all] Topic {}: key={}, label={}, keywords={:?}", i, topic.key, topic.label, topic.keywords);
-        }
+        println!("[SettingsRepository::get_all] Loaded {} topics", settings.topics.len());
 
         // Define all default topics (for new users and to add missing topics for existing users)
         let default_topics = vec![

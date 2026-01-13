@@ -20,6 +20,7 @@
 ### 📚 Paper Management
 - **Automated Paper Fetching** - Fetch papers from ArXiv based on your research topics
 - **Smart Filtering** - Papers are automatically scored and filtered by AI relevance
+- **PDF Download & Preview** - Download PDFs locally and open in your preferred PDF viewer
 - **Organize with Collections** - Group papers into custom collections for better organization
 - **Advanced Search & Filter** - Full-text search with filters by date, score, tags, and topics
 - **Spam Management** - Mark irrelevant papers as spam to train the filter
@@ -117,7 +118,13 @@ Go to **Settings** > **API** and add your LLM provider API key:
 
 Go to **Settings** > **General** to select your preferred UI language (English or Chinese).
 
-### 3. Add Research Topics
+### 3. Configure Storage
+
+Go to **Settings** > **Storage** to set where papers are saved:
+- **LaTeX Download Path** - Where LaTeX sources are saved (default: `~/Documents/PaperFuse/latex`)
+- **PDF Download Path** - Where PDF files are saved (default: `~/Documents/PaperFuse/pdfs`)
+
+### 4. Add Research Topics
 
 1. Go to **Settings** > **Topics**
 2. Click **"Add Topic"**
@@ -126,7 +133,7 @@ Go to **Settings** > **General** to select your preferred UI language (English o
    - Examples: `cs.AI`, `cs.LG`, `cs.CV`, `stat.ML`
 5. Save
 
-### 4. Fetch Papers
+### 5. Fetch Papers
 
 1. Click **"Fetch Papers"** on the home page
 2. Select topics to fetch from
@@ -136,9 +143,10 @@ Go to **Settings** > **General** to select your preferred UI language (English o
 4. Wait for papers to be fetched and analyzed
 5. Browse results in list or grid view
 
-### 5. Organize & Read
+### 6. Organize & Read
 
 - **Create Collections** to group related papers
+- **Download PDFs** for offline reading in your preferred PDF viewer
 - **Read AI summaries** and key insights
 - **View algorithm flowcharts** for technical understanding
 - **Filter by score, date, or topics**
@@ -272,12 +280,12 @@ See [`.github/workflows/build-macos.yml`](.github/workflows/build-macos.yml) for
 
 The app uses SQLite with the following main tables:
 
-- `papers` - Paper metadata and analysis results
+- `papers` - Paper metadata, AI analysis results, and local file paths (PDF/LaTeX)
 - `collections` - User-created collections
 - `paper_collections` - Many-to-many relationship between papers and collections
 - `fetch_history` - History of paper fetches
 - `topics` - Research topics for filtering
-- `settings` - Application settings
+- `settings` - Application settings including storage paths
 
 ## 🐛 Troubleshooting
 
@@ -314,6 +322,8 @@ The app uses SQLite with the following main tables:
 
 ### Recently Completed ✨
 
+- [x] PDF download and preview - Download PDFs locally and open in system default viewer
+- [x] Configurable storage paths - Set custom paths for LaTeX and PDF downloads
 - [x] Sort state persistence - Remember user's sort preferences across navigation
 - [x] Collection indicator badges - Visual indicators for papers in collections
 - [x] Collection quick filter - Fast filter to show only papers in collections

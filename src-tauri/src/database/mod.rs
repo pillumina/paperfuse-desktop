@@ -132,6 +132,7 @@ pub async fn create_schema(pool: &SqlitePool) -> SqlxResult<()> {
         ("016_add_spam_field.sql", include_str!("../../migrations/016_add_spam_field.sql")),
         ("017_add_pdf_local_path.sql", include_str!("../../migrations/017_add_pdf_local_path.sql")),
         ("018_add_analysis_config.sql", include_str!("../../migrations/018_add_analysis_config.sql")),
+        ("019_add_related_papers.sql", include_str!("../../migrations/019_add_related_papers.sql")),
     ];
 
     for (migration_name, schema) in migrations.iter() {

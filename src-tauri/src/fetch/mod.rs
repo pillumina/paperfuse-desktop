@@ -3,7 +3,7 @@
 pub mod queue;
 
 use crate::arxiv::{self, ArxivEntry, FetchOptions as ArxivFetchOptions};
-use crate::analysis::{AnalysisDepth, UserAnalysisConfig};
+use crate::analysis::AnalysisDepth;
 use crate::database::{PaperRepository, FetchHistoryRepository, FetchHistoryEntry, PaperSummary, SettingsRepository};
 use crate::llm::{self, LlmClient, LlmError, RelevanceResult};
 use crate::models::{FetchOptions, FetchStatus, Paper, TopicConfig};
@@ -197,6 +197,147 @@ impl Drop for FetchGuard {
             eprintln!("[FetchGuard] Cleared cancellation token (via Drop)");
         }
     }
+}
+
+/// Perform modular analysis using the new block-based system
+async fn perform_modular_analysis(
+    pool: &SqlitePool,
+    client: &LlmClient,
+    paper: &mut Paper,
+    entry: &ArxivEntry,
+    topics: &[TopicConfig],
+    latex_content: Option<&str>,
+    language: &str,
+    depth: AnalysisDepth,
+) -> Result<(), FetchError> {
+    // Get user's analysis config
+    let settings_repo = SettingsRepository::new(pool);
+    let settings = settings_repo.get_all().await
+        .map_err(|e| FetchError::DatabaseError(e.to_string()))?;
+    let analysis_config = settings.analysis_config.unwrap_or_default();
+
+    // Fix basic blocks mode - they should always be Both
+    let analysis_config = fix_basic_blocks_mode(analysis_config);
+
+    eprintln!("[perform_modular_analysis] Using config with {} blocks for {:?} analysis",
+        analysis_config.blocks.len(), depth);
+
+    // Build modular prompt
+    let prompt = crate::analysis::build_analysis_prompt(
+        &paper.title,
+        &entry.summary,
+        topics,
+        latex_content,
+        language,
+        &analysis_config,
+        depth,
+    );
+
+    eprintln!("[perform_modular_analysis] Generated prompt ({} chars)", prompt.chars().count());
+
+    // Send to LLM
+    let response = client.send_chat_request(&prompt, depth.as_str()).await
+        .map_err(|e| {
+            eprintln!("[perform_modular_analysis] LLM request failed: {}", e);
+            FetchError::LlmError(e)
+        })?;
+
+    // Clean and fix response
+    let cleaned = client.clean_response(&response);
+    let fixed = client.fix_json_formatting(&cleaned);
+
+    // Parse based on depth
+    match depth {
+        AnalysisDepth::Full => {
+            let result: crate::llm::FullAnalysisResult = serde_json::from_str(&fixed)
+                .map_err(|e| {
+                    eprintln!("[perform_modular_analysis] Failed to parse full analysis: {}", e);
+                    FetchError::LlmError(crate::llm::LlmError::ParseError(e.to_string()))
+                })?;
+
+            // Update paper with results
+            paper.ai_summary = Some(result.ai_summary);
+            paper.key_insights = Some(result.key_insights);
+            paper.novelty_score = Some(result.novelty_score);
+            paper.novelty_reason = Some(result.novelty_reason);
+            paper.effectiveness_score = Some(result.effectiveness_score);
+            paper.effectiveness_reason = Some(result.effectiveness_reason);
+            paper.experiment_completeness_score = Some(result.experiment_completeness_score);
+            paper.experiment_completeness_reason = Some(result.experiment_completeness_reason);
+            paper.algorithm_flowchart = result.algorithm_flowchart;
+            paper.time_complexity = result.time_complexity;
+            paper.space_complexity = result.space_complexity;
+            paper.code_available = result.code_available;
+            paper.code_links = if result.code_links.is_empty() {
+                None
+            } else {
+                Some(result.code_links)
+            };
+            paper.engineering_notes = Some(result.engineering_notes);
+            paper.tags = result.suggested_tags;
+            paper.topics = result.suggested_topics;
+
+            // Handle related_papers
+            if !result.related_papers.is_empty() {
+                paper.related_papers = Some(result.related_papers.into_iter().map(|rp| crate::models::RelatedPaper {
+                    arxiv_id: rp.arxiv_id,
+                    title: rp.title,
+                    relationship: match rp.relationship {
+                        crate::llm::PaperRelationship::BuildsOn => crate::models::PaperRelationship::BuildsOn,
+                        crate::llm::PaperRelationship::ImprovesUpon => crate::models::PaperRelationship::ImprovesUpon,
+                        crate::llm::PaperRelationship::CompetingWith => crate::models::PaperRelationship::CompetingWith,
+                        crate::llm::PaperRelationship::CitedBy => crate::models::PaperRelationship::CitedBy,
+                        crate::llm::PaperRelationship::SimilarTo => crate::models::PaperRelationship::SimilarTo,
+                    },
+                    relevance_score: rp.relevance_score,
+                    reason: rp.reason,
+                }).collect());
+            }
+        }
+        AnalysisDepth::Standard => {
+            let result: crate::llm::StandardAnalysisResult = serde_json::from_str(&fixed)
+                .map_err(|e| {
+                    eprintln!("[perform_modular_analysis] Failed to parse standard analysis: {}", e);
+                    FetchError::LlmError(crate::llm::LlmError::ParseError(e.to_string()))
+                })?;
+
+            // Update paper with results
+            paper.ai_summary = Some(result.ai_summary);
+            paper.key_insights = Some(result.key_insights);
+            paper.novelty_score = Some(result.novelty_score);
+            paper.novelty_reason = Some(result.novelty_reason);
+            paper.effectiveness_score = Some(result.effectiveness_score);
+            paper.effectiveness_reason = Some(result.effectiveness_reason);
+            paper.code_available = result.code_available;
+            paper.code_links = if result.code_links.is_empty() {
+                None
+            } else {
+                Some(result.code_links)
+            };
+            paper.engineering_notes = Some(result.engineering_notes);
+            paper.tags = result.suggested_tags;
+            paper.topics = result.suggested_topics;
+
+            // Handle related_papers
+            if !result.related_papers.is_empty() {
+                paper.related_papers = Some(result.related_papers.into_iter().map(|rp| crate::models::RelatedPaper {
+                    arxiv_id: rp.arxiv_id,
+                    title: rp.title,
+                    relationship: match rp.relationship {
+                        crate::llm::PaperRelationship::BuildsOn => crate::models::PaperRelationship::BuildsOn,
+                        crate::llm::PaperRelationship::ImprovesUpon => crate::models::PaperRelationship::ImprovesUpon,
+                        crate::llm::PaperRelationship::CompetingWith => crate::models::PaperRelationship::CompetingWith,
+                        crate::llm::PaperRelationship::CitedBy => crate::models::PaperRelationship::CitedBy,
+                        crate::llm::PaperRelationship::SimilarTo => crate::models::PaperRelationship::SimilarTo,
+                    },
+                    relevance_score: rp.relevance_score,
+                    reason: rp.reason,
+                }).collect());
+            }
+        }
+    }
+
+    Ok(())
 }
 
 /// Manages the state and execution of paper fetching
@@ -818,6 +959,7 @@ impl FetchManager {
                 let threshold = options.deep_analysis_threshold.unwrap_or(0);
                 if relevance_result.result.score >= threshold {
                     Self::perform_deep_analysis_for_paper(
+                        pool,
                         client,
                         &mut paper,
                         entry,
@@ -907,6 +1049,7 @@ impl FetchManager {
 
     /// Perform deep analysis for a paper
     async fn perform_deep_analysis_for_paper(
+        pool: &SqlitePool,
         client: &LlmClient,
         paper: &mut Paper,
         entry: &ArxivEntry,
@@ -932,11 +1075,11 @@ impl FetchManager {
         match analysis_mode {
             "full" => {
                 // Full mode analysis
-                Self::perform_full_analysis_impl(client, paper, entry, topics, latex_result, language).await?;
+                Self::perform_full_analysis_impl(pool, client, paper, entry, topics, latex_result, language).await?;
             }
             "standard" | _ => {
                 // Standard mode analysis
-                Self::perform_standard_analysis_impl(client, paper, entry, topics, latex_result, language).await?;
+                Self::perform_standard_analysis_impl(pool, client, paper, entry, topics, latex_result, language).await?;
             }
         }
 
@@ -945,6 +1088,7 @@ impl FetchManager {
 
     /// Perform Full mode analysis (shared implementation for both sync and async)
     async fn perform_full_analysis_impl(
+        pool: &SqlitePool,
         client: &LlmClient,
         paper: &mut Paper,
         entry: &ArxivEntry,
@@ -974,7 +1118,7 @@ impl FetchManager {
         };
 
         // Full mode requires LaTeX - mark as incomplete if not available
-        let content = match latex_content {
+        let latex_content = match latex_content {
             Some(latex) => latex,
             None => {
                 eprintln!("[perform_full_analysis_impl] No LaTeX available, marking as incomplete");
@@ -983,52 +1127,17 @@ impl FetchManager {
             }
         };
 
-        // Limit content to 50000 characters to avoid token limits
-        let content_limited = content.chars().take(50000).collect::<String>();
-        eprintln!("[perform_full_analysis_impl] Content limited to {} chars", content_limited.len());
-
-        // Perform Full analysis
-        let analysis = client.analyze_full(
-            &entry.title,
-            &entry.summary,
+        // Use the new modular system
+        perform_modular_analysis(
+            pool,
+            client,
+            paper,
+            entry,
             topics,
-            &content_limited,
-            language
+            Some(latex_content.as_str()),
+            language,
+            AnalysisDepth::Full,
         ).await?;
-
-        // Update paper with Full analysis results
-        paper.ai_summary = Some(analysis.ai_summary);
-        paper.key_insights = Some(analysis.key_insights);
-        paper.novelty_score = Some(analysis.novelty_score);
-        paper.novelty_reason = Some(analysis.novelty_reason);
-        paper.effectiveness_score = Some(analysis.effectiveness_score);
-        paper.effectiveness_reason = Some(analysis.effectiveness_reason);
-        paper.experiment_completeness_score = Some(analysis.experiment_completeness_score);
-        paper.experiment_completeness_reason = Some(analysis.experiment_completeness_reason);
-        paper.algorithm_flowchart = analysis.algorithm_flowchart;
-        paper.time_complexity = analysis.time_complexity;
-        paper.space_complexity = analysis.space_complexity;
-        paper.code_available = analysis.code_available;
-        paper.code_links = if analysis.code_links.is_empty() {
-            None
-        } else {
-            Some(analysis.code_links)
-        };
-        // Fallback: if code_links exist but LLM incorrectly set code_available=false, correct it
-        if paper.code_links.is_some() && !paper.code_available {
-            eprintln!("[perform_full_analysis_impl] LLM returned code_links but code_available=false, correcting to true for {}", paper.id);
-            paper.code_available = true;
-        }
-        paper.engineering_notes = Some(analysis.engineering_notes);
-
-        // Update tags (only suggested_tags, not suggested_topics)
-        paper.tags = analysis.suggested_tags;
-
-        // Update topics if LLM provided suggestions
-        if !analysis.suggested_topics.is_empty() {
-            eprintln!("[perform_full_analysis_impl] Updating topics from LLM suggestions: {:?}", analysis.suggested_topics);
-            paper.topics = analysis.suggested_topics;
-        }
 
         paper.analysis_mode = Some("full".to_string());
         paper.is_deep_analyzed = true;
@@ -1039,6 +1148,7 @@ impl FetchManager {
 
     /// Perform standard mode analysis (shared implementation)
     async fn perform_standard_analysis_impl(
+        pool: &SqlitePool,
         client: &LlmClient,
         paper: &mut Paper,
         entry: &ArxivEntry,
@@ -1070,35 +1180,28 @@ impl FetchManager {
         };
 
         // If LaTeX extraction failed, use abstract
-        let content = latex_content.as_deref().unwrap_or(&entry.summary);
+        let content = latex_content.as_deref();
         let is_fallback = latex_content.is_none();
 
         if is_fallback {
             eprintln!("[perform_standard_analysis_impl] Using abstract as fallback content");
         }
 
-        // Perform Standard analysis
-        let analysis = client.analyze_standard(
-            &entry.title,
-            &entry.summary,
+        // Use the new modular system
+        perform_modular_analysis(
+            pool,
+            client,
+            paper,
+            entry,
             topics,
             content,
-            language
+            language,
+            AnalysisDepth::Standard,
         ).await?;
 
-        // Update paper with Standard analysis results
-        paper.ai_summary = Some(analysis.ai_summary);
-        paper.key_insights = Some(analysis.key_insights);
-        paper.novelty_score = Some(analysis.novelty_score);
-        paper.novelty_reason = Some(analysis.novelty_reason);
-        paper.effectiveness_score = Some(analysis.effectiveness_score);
-        paper.effectiveness_reason = Some(analysis.effectiveness_reason);
-        paper.code_available = analysis.code_available;
-        paper.code_links = if analysis.code_links.is_empty() {
-            None
-        } else {
-            Some(analysis.code_links)
-        };
+        paper.analysis_mode = Some("standard".to_string());
+        paper.is_deep_analyzed = true;
+        paper.analysis_incomplete = is_fallback;
 
         Ok(())
     }
@@ -1592,6 +1695,7 @@ impl FetchManager {
                             options.analysis_mode.as_deref().unwrap_or("standard"));
 
                         self.perform_deep_analysis(
+                            &self.pool,
                             client,
                             &mut paper,
                             entry,
@@ -1684,6 +1788,7 @@ impl FetchManager {
     /// Perform Phase 2 deep analysis
     async fn perform_deep_analysis(
         &self,
+        pool: &SqlitePool,
         client: &LlmClient,
         paper: &mut Paper,
         entry: &ArxivEntry,
@@ -1709,11 +1814,11 @@ impl FetchManager {
         match analysis_mode {
             "full" => {
                 // Full mode analysis
-                self.perform_full_analysis(client, paper, entry, topics, latex_result, language).await?;
+                self.perform_full_analysis(pool, client, paper, entry, topics, latex_result, language).await?;
             }
             "standard" | _ => {
                 // Standard mode analysis
-                self.perform_standard_analysis(client, paper, entry, topics, latex_result, language).await?;
+                self.perform_standard_analysis(pool, client, paper, entry, topics, latex_result, language).await?;
             }
         }
 
@@ -1723,6 +1828,7 @@ impl FetchManager {
     /// Perform Standard mode analysis (Introduction + Conclusion)
     async fn perform_standard_analysis(
         &self,
+        pool: &SqlitePool,
         client: &LlmClient,
         paper: &mut Paper,
         entry: &ArxivEntry,
@@ -1754,50 +1860,24 @@ impl FetchManager {
         };
 
         // If LaTeX extraction failed, use abstract
-        let content = latex_content.as_deref().unwrap_or(&entry.summary);
+        let content = latex_content.as_deref();
         let is_fallback = latex_content.is_none();
 
         if is_fallback {
             eprintln!("[perform_standard_analysis] Using abstract as fallback content");
         }
 
-        // Perform Standard analysis
-        let analysis = client.analyze_standard(
-            &entry.title,
-            &entry.summary,
+        // Use the new modular system
+        perform_modular_analysis(
+            pool,
+            client,
+            paper,
+            entry,
             topics,
             content,
-            language
+            language,
+            AnalysisDepth::Standard,
         ).await?;
-
-        // Update paper with Standard analysis results
-        paper.ai_summary = Some(analysis.ai_summary);
-        paper.key_insights = Some(analysis.key_insights);
-        paper.novelty_score = Some(analysis.novelty_score);
-        paper.novelty_reason = Some(analysis.novelty_reason);
-        paper.effectiveness_score = Some(analysis.effectiveness_score);
-        paper.effectiveness_reason = Some(analysis.effectiveness_reason);
-        paper.code_available = analysis.code_available;
-        paper.code_links = if analysis.code_links.is_empty() {
-            None
-        } else {
-            Some(analysis.code_links)
-        };
-        // Fallback: if code_links exist but LLM incorrectly set code_available=false, correct it
-        if paper.code_links.is_some() && !paper.code_available {
-            eprintln!("[perform_standard_analysis] LLM returned code_links but code_available=false, correcting to true for {}", paper.id);
-            paper.code_available = true;
-        }
-        paper.engineering_notes = Some(analysis.engineering_notes);
-
-        // Update tags (only suggested_tags, not suggested_topics)
-        paper.tags = analysis.suggested_tags;
-
-        // Update topics if LLM provided suggestions
-        if !analysis.suggested_topics.is_empty() {
-            eprintln!("[perform_standard_analysis] Updating topics from LLM suggestions: {:?}", analysis.suggested_topics);
-            paper.topics = analysis.suggested_topics;
-        }
 
         paper.analysis_mode = Some("standard".to_string());
         paper.is_deep_analyzed = true;
@@ -1812,6 +1892,7 @@ impl FetchManager {
     /// Perform Full mode analysis (full paper content)
     async fn perform_full_analysis(
         &self,
+        pool: &SqlitePool,
         client: &LlmClient,
         paper: &mut Paper,
         entry: &ArxivEntry,
@@ -1841,7 +1922,7 @@ impl FetchManager {
         };
 
         // Full mode requires LaTeX - mark as incomplete if not available
-        let content = match latex_content {
+        let latex_content = match latex_content {
             Some(latex) => latex,
             None => {
                 eprintln!("[perform_full_analysis] No LaTeX available, marking as incomplete");
@@ -1850,48 +1931,17 @@ impl FetchManager {
             }
         };
 
-        // Perform Full analysis
-        let analysis = client.analyze_full(
-            &entry.title,
-            &entry.summary,
+        // Use the new modular system
+        perform_modular_analysis(
+            pool,
+            client,
+            paper,
+            entry,
             topics,
-            &content,
-            language
+            Some(latex_content.as_str()),
+            language,
+            AnalysisDepth::Full,
         ).await?;
-
-        // Update paper with Full analysis results
-        paper.ai_summary = Some(analysis.ai_summary);
-        paper.key_insights = Some(analysis.key_insights);
-        paper.novelty_score = Some(analysis.novelty_score);
-        paper.novelty_reason = Some(analysis.novelty_reason);
-        paper.effectiveness_score = Some(analysis.effectiveness_score);
-        paper.effectiveness_reason = Some(analysis.effectiveness_reason);
-        paper.experiment_completeness_score = Some(analysis.experiment_completeness_score);
-        paper.experiment_completeness_reason = Some(analysis.experiment_completeness_reason);
-        paper.algorithm_flowchart = analysis.algorithm_flowchart;
-        paper.time_complexity = analysis.time_complexity;
-        paper.space_complexity = analysis.space_complexity;
-        paper.code_available = analysis.code_available;
-        paper.code_links = if analysis.code_links.is_empty() {
-            None
-        } else {
-            Some(analysis.code_links)
-        };
-        // Fallback: if code_links exist but LLM incorrectly set code_available=false, correct it
-        if paper.code_links.is_some() && !paper.code_available {
-            eprintln!("[perform_full_analysis] LLM returned code_links but code_available=false, correcting to true for {}", paper.id);
-            paper.code_available = true;
-        }
-        paper.engineering_notes = Some(analysis.engineering_notes);
-
-        // Update tags (only suggested_tags, not suggested_topics)
-        paper.tags = analysis.suggested_tags;
-
-        // Update topics if LLM provided suggestions
-        if !analysis.suggested_topics.is_empty() {
-            eprintln!("[perform_full_analysis] Updating topics from LLM suggestions: {:?}", analysis.suggested_topics);
-            paper.topics = analysis.suggested_topics;
-        }
 
         paper.analysis_mode = Some("full".to_string());
         paper.is_deep_analyzed = true;
@@ -1952,6 +2002,30 @@ impl FetchManager {
             emitter(new_status);
         }
     }
+}
+
+/// Ensure basic blocks (ai_summary, topics) always have mode=Both
+fn fix_basic_blocks_mode(config: crate::analysis::UserAnalysisConfig) -> crate::analysis::UserAnalysisConfig {
+    use crate::analysis::BlockRunMode;
+
+    let blocks = config.blocks.into_iter().map(|mut block| {
+        // Basic blocks should always have mode=Both
+        if is_basic_block(&block.block_id) {
+            if block.mode != BlockRunMode::Both {
+                eprintln!("[fix_basic_blocks_mode] Correcting mode for basic block '{}' from {:?} to Both",
+                    block.block_id, block.mode);
+                block.mode = BlockRunMode::Both;
+            }
+        }
+        block
+    }).collect();
+
+    crate::analysis::UserAnalysisConfig { blocks }
+}
+
+/// Check if a block ID is a basic block
+fn is_basic_block(block_id: &str) -> bool {
+    matches!(block_id, "ai_summary" | "topics")
 }
 
 #[cfg(test)]

@@ -68,6 +68,10 @@ impl PaperRepository {
             .map(|v| serde_json::to_string(v))
             .transpose()
             .map_err(|e| PaperError::Serialization(e.to_string()))?;
+        let related_papers_json = paper.related_papers.as_ref()
+            .map(|v| serde_json::to_string(v))
+            .transpose()
+            .map_err(|e| PaperError::Serialization(e.to_string()))?;
 
         let result = sqlx::query(
             r#"
@@ -82,8 +86,8 @@ impl PaperRepository {
                 effectiveness_score, effectiveness_reason,
                 experiment_completeness_score, experiment_completeness_reason,
                 algorithm_flowchart, time_complexity, space_complexity,
-                analysis_mode, analysis_incomplete, pdf_local_path
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                analysis_mode, analysis_incomplete, pdf_local_path, related_papers
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(id) DO NOTHING
             "#
         )
@@ -121,6 +125,7 @@ impl PaperRepository {
         .bind(&paper.analysis_mode)
         .bind(paper.analysis_incomplete)
         .bind(&paper.pdf_local_path)
+        .bind(&related_papers_json)
         .execute(&self.pool)
         .await?;
 
@@ -154,9 +159,13 @@ impl PaperRepository {
             .map(|v| serde_json::to_string(v))
             .transpose()
             .map_err(|e| PaperError::Serialization(e.to_string()))?;
+        let related_papers_json = paper.related_papers.as_ref()
+            .map(|v| serde_json::to_string(v))
+            .transpose()
+            .map_err(|e| PaperError::Serialization(e.to_string()))?;
 
-        eprintln!("[PaperRepository::save] Serialized data: authors_len={}, tags_len={}, topics_json={}, insights={:?}, links={:?}",
-            authors_json.len(), tags_json.len(), topics_json, insights_json.is_some(), links_json.is_some());
+        eprintln!("[PaperRepository::save] Serialized data: authors_len={}, tags_len={}, topics_json={}, insights={:?}, links={:?}, related_papers={:?}",
+            authors_json.len(), tags_json.len(), topics_json, insights_json.is_some(), links_json.is_some(), related_papers_json.is_some());
 
         let result = sqlx::query(
             r#"
@@ -171,8 +180,8 @@ impl PaperRepository {
                 effectiveness_score, effectiveness_reason,
                 experiment_completeness_score, experiment_completeness_reason,
                 algorithm_flowchart, time_complexity, space_complexity,
-                analysis_mode, analysis_incomplete, pdf_local_path
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                analysis_mode, analysis_incomplete, pdf_local_path, related_papers
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(id) DO UPDATE SET
                 arxiv_id = excluded.arxiv_id,
                 title = excluded.title,
@@ -201,7 +210,8 @@ impl PaperRepository {
                 space_complexity = excluded.space_complexity,
                 analysis_mode = excluded.analysis_mode,
                 analysis_incomplete = excluded.analysis_incomplete,
-                pdf_local_path = excluded.pdf_local_path
+                pdf_local_path = excluded.pdf_local_path,
+                related_papers = excluded.related_papers
             "#
         )
         .bind(&paper.id)
@@ -238,6 +248,7 @@ impl PaperRepository {
         .bind(&paper.analysis_mode)
         .bind(paper.analysis_incomplete)
         .bind(&paper.pdf_local_path)
+        .bind(&related_papers_json)
         .execute(&self.pool)
         .await;
 
@@ -511,6 +522,10 @@ impl PaperRepository {
         let analysis_incomplete: bool = get_bool_default(&row, "analysis_incomplete", false);
         let pdf_local_path: Option<String> = get_opt_string(&row, "pdf_local_path");
 
+        // Parse related_papers from JSON if exists
+        let related_papers: Option<String> = get_opt_string(&row, "related_papers");
+        let related_papers = related_papers.and_then(|v| serde_json::from_str(&v).ok());
+
         Ok(Paper {
             id: row.get("id"),
             arxiv_id: row.get("arxiv_id"),
@@ -549,6 +564,7 @@ impl PaperRepository {
             analysis_mode,
             analysis_incomplete,
             pdf_local_path,
+            related_papers,
         })
     }
 }

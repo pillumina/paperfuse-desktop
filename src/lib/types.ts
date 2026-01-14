@@ -129,8 +129,8 @@ export interface RelatedPaper {
   arxivId: string;
   title: string;
   relationship: PaperRelationship;
-  relevanceScore: number;
-  reason: string;
+  relevanceScore?: number | null;  // Optional for robustness
+  reason?: string | null;         // Optional for robustness
 }
 
 // ============================================

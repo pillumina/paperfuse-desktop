@@ -8,7 +8,7 @@ use crate::arxiv::{fetch_papers, FetchOptions};
 use crate::database::PaperRepository;
 use crate::llm::{LlmClient, StandardAnalysisResult, FullAnalysisResult};
 use crate::models::{Paper, LLMProvider};
-use crate::analysis::{AnalysisDepth, UserAnalysisConfig};
+use crate::analysis::AnalysisDepth;
 use sqlx::SqlitePool;
 use tauri::State;
 
@@ -109,6 +109,9 @@ pub async fn analyze_paper(
     let topics = settings.topics.clone();
     let analysis_config = settings.analysis_config.unwrap_or_default();
 
+    // Fix basic blocks mode - they should always be Both
+    let analysis_config = fix_basic_blocks_mode(analysis_config);
+
     eprintln!("[analyze_paper] Using analysis config with {} blocks", analysis_config.blocks.len());
 
     // Get LaTeX download path from settings
@@ -169,7 +172,7 @@ pub async fn analyze_paper(
             e.to_string()
         })?;
 
-    eprintln!("[analyze_paper] Raw response from LLM: {}", &response.chars().take(500).collect::<String>());
+    eprintln!("[analyze_paper] Raw response from LLM ({} chars): {}", response.len(), &response.chars().take(500).collect::<String>());
 
     // Clean the response (remove markdown code blocks)
     let cleaned_response = client.clean_response(&response);
@@ -183,28 +186,46 @@ pub async fn analyze_paper(
         eprintln!("[analyze_paper] Applied JSON formatting fixes");
     }
 
+    eprintln!("[analyze_paper] Fixed response ({} chars): {}", fixed_response.len(), &fixed_response.chars().take(500).collect::<String>());
+
     // Parse the JSON response based on depth
     match depth {
         AnalysisDepth::Full => {
+            eprintln!("[analyze_paper] Attempting to parse as FullAnalysisResult...");
             let result: crate::llm::FullAnalysisResult = serde_json::from_str(&fixed_response)
                 .map_err(|e| {
-                    eprintln!("[analyze_paper] Failed to parse full analysis: {}", e);
-                    eprintln!("[analyze_paper] Attempted to parse: {}", &fixed_response.chars().take(1000).collect::<String>());
+                    eprintln!("[analyze_paper] ===== PARSE ERROR =====");
+                    eprintln!("[analyze_paper] Error: {}", e);
+                    eprintln!("[analyze_paper] Response length: {}", fixed_response.len());
+                    eprintln!("[analyze_paper] First 2000 chars:\n{}", &fixed_response.chars().take(2000).collect::<String>());
+                    if fixed_response.len() > 2000 {
+                        eprintln!("[analyze_paper] Last 500 chars:\n{}", &fixed_response.chars().skip(fixed_response.len().saturating_sub(500)).collect::<String>());
+                    }
+                    eprintln!("[analyze_paper] ===== END PARSE ERROR =====");
                     format!("Failed to parse full analysis result: {}", e)
                 })?;
 
+            eprintln!("[analyze_paper] Successfully parsed FullAnalysisResult");
             // Update paper with analysis results
             update_paper_with_full_analysis(&mut paper, result);
             paper.analysis_incomplete = latex_content.is_none();
         }
         AnalysisDepth::Standard => {
+            eprintln!("[analyze_paper] Attempting to parse as StandardAnalysisResult...");
             let result: crate::llm::StandardAnalysisResult = serde_json::from_str(&fixed_response)
                 .map_err(|e| {
-                    eprintln!("[analyze_paper] Failed to parse standard analysis: {}", e);
-                    eprintln!("[analyze_paper] Attempted to parse: {}", &fixed_response.chars().take(1000).collect::<String>());
+                    eprintln!("[analyze_paper] ===== PARSE ERROR =====");
+                    eprintln!("[analyze_paper] Error: {}", e);
+                    eprintln!("[analyze_paper] Response length: {}", fixed_response.len());
+                    eprintln!("[analyze_paper] First 2000 chars:\n{}", &fixed_response.chars().take(2000).collect::<String>());
+                    if fixed_response.len() > 2000 {
+                        eprintln!("[analyze_paper] Last 500 chars:\n{}", &fixed_response.chars().skip(fixed_response.len().saturating_sub(500)).collect::<String>());
+                    }
+                    eprintln!("[analyze_paper] ===== END PARSE ERROR =====");
                     format!("Failed to parse standard analysis result: {}", e)
                 })?;
 
+            eprintln!("[analyze_paper] Successfully parsed StandardAnalysisResult");
             // Update paper with analysis results
             update_paper_with_standard_analysis(&mut paper, result);
             paper.analysis_incomplete = latex_content.is_none();
@@ -306,6 +327,23 @@ fn update_paper_with_standard_analysis(paper: &mut Paper, result: StandardAnalys
     if !result.suggested_topics.is_empty() {
         paper.topics = result.suggested_topics;
     }
+
+    // Update related_papers if provided
+    if !result.related_papers.is_empty() {
+        paper.related_papers = Some(result.related_papers.into_iter().map(|rp| crate::models::RelatedPaper {
+            arxiv_id: rp.arxiv_id,
+            title: rp.title,
+            relationship: match rp.relationship {
+                crate::llm::PaperRelationship::BuildsOn => crate::models::PaperRelationship::BuildsOn,
+                crate::llm::PaperRelationship::ImprovesUpon => crate::models::PaperRelationship::ImprovesUpon,
+                crate::llm::PaperRelationship::CompetingWith => crate::models::PaperRelationship::CompetingWith,
+                crate::llm::PaperRelationship::CitedBy => crate::models::PaperRelationship::CitedBy,
+                crate::llm::PaperRelationship::SimilarTo => crate::models::PaperRelationship::SimilarTo,
+            },
+            relevance_score: rp.relevance_score,
+            reason: rp.reason,
+        }).collect());
+    }
 }
 
 /// Update paper with full analysis results
@@ -323,6 +361,7 @@ fn update_paper_with_full_analysis(paper: &mut Paper, result: FullAnalysisResult
         key_insights: result.key_insights,
         suggested_tags: result.suggested_tags,
         suggested_topics: result.suggested_topics,
+        related_papers: result.related_papers,
     });
 
     // Then add full-mode specific fields
@@ -331,4 +370,28 @@ fn update_paper_with_full_analysis(paper: &mut Paper, result: FullAnalysisResult
     paper.algorithm_flowchart = result.algorithm_flowchart;
     paper.time_complexity = result.time_complexity;
     paper.space_complexity = result.space_complexity;
+}
+
+/// Ensure basic blocks (ai_summary, topics) always have mode=Both
+fn fix_basic_blocks_mode(config: crate::analysis::UserAnalysisConfig) -> crate::analysis::UserAnalysisConfig {
+    use crate::analysis::BlockRunMode;
+
+    let blocks = config.blocks.into_iter().map(|mut block| {
+        // Basic blocks should always have mode=Both
+        if is_basic_block(&block.block_id) {
+            if block.mode != BlockRunMode::Both {
+                eprintln!("[fix_basic_blocks_mode] Correcting mode for basic block '{}' from {:?} to Both",
+                    block.block_id, block.mode);
+                block.mode = BlockRunMode::Both;
+            }
+        }
+        block
+    }).collect();
+
+    crate::analysis::UserAnalysisConfig { blocks }
+}
+
+/// Check if a block ID is a basic block
+fn is_basic_block(block_id: &str) -> bool {
+    matches!(block_id, "ai_summary" | "topics")
 }

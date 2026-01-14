@@ -30,32 +30,47 @@ fn get_enabled_blocks(config: &UserAnalysisConfig, depth: AnalysisDepth) -> Vec<
         .map(|c| (c.block_id.clone(), c))
         .collect();
 
-    all_blocks
+    eprintln!("[get_enabled_blocks] Total blocks: {}, depth: {:?}", all_blocks.len(), depth);
+    eprintln!("[get_enabled_blocks] User config has {} blocks", config.blocks.len());
+
+    let enabled: Vec<AnalysisBlockConfig> = all_blocks
         .into_iter()
         .filter(|block| {
             // Check user config
             if let Some(user_cfg) = enabled_map.get(&block.id) {
                 if !user_cfg.enabled {
+                    eprintln!("[get_enabled_blocks] Block '{}' DISABLED by user config", block.id);
                     return false;
                 }
-                return match user_cfg.mode {
+                let should_run = match user_cfg.mode {
                     BlockRunMode::Standard => depth == AnalysisDepth::Standard,
                     BlockRunMode::Full => depth == AnalysisDepth::Full,
                     BlockRunMode::Both => true,
                 };
+                eprintln!("[get_enabled_blocks] Block '{}' user config: enabled={}, mode={:?}, should_run={}",
+                    block.id, user_cfg.enabled, user_cfg.mode, should_run);
+                return should_run;
             }
 
             // Use default from block definition
             if !block.default_enabled {
+                eprintln!("[get_enabled_blocks] Block '{}' DISABLED by default", block.id);
                 return false;
             }
-            match block.default_mode {
+            let should_run = match block.default_mode {
                 BlockRunMode::Standard => depth == AnalysisDepth::Standard,
                 BlockRunMode::Full => depth == AnalysisDepth::Full,
                 BlockRunMode::Both => true,
-            }
+            };
+            eprintln!("[get_enabled_blocks] Block '{}' using default: default_enabled={}, default_mode={:?}, should_run={}",
+                block.id, block.default_enabled, block.default_mode, should_run);
+            should_run
         })
-        .collect()
+        .collect();
+
+    eprintln!("[get_enabled_blocks] Final enabled blocks ({}): {:?}", enabled.len(),
+        enabled.iter().map(|b| b.id.as_str()).collect::<Vec<_>>());
+    enabled
 }
 
 /// Build modular prompt from enabled blocks
@@ -118,8 +133,26 @@ fn build_language_instruction(language: &str, blocks: &[AnalysisBlockConfig], de
         return String::new();
     }
 
-    let has_complexity = blocks.iter().any(|b| b.id == "complexity" || b.id == "algorithms");
+    let has_complexity = blocks.iter().any(|b| b.id == "complexity");
+    let has_algorithms = blocks.iter().any(|b| b.id == "algorithms");
+    let has_formulas = blocks.iter().any(|b| b.id == "formulas");
+    let has_related_papers = blocks.iter().any(|b| b.id == "related_papers");
     let has_experiments = depth == AnalysisDepth::Full && blocks.iter().any(|b| b.id == "quality_assessment");
+
+    let mut additional_requirements = String::new();
+
+    if has_complexity {
+        additional_requirements.push_str("- **Complexity analysis**: Provide big-O notation in English (e.g., O(n log n)), but explain the meaning in Chinese\n");
+    }
+    if has_algorithms {
+        additional_requirements.push_str("- **Algorithms**: Algorithm names and step descriptions in Chinese, but complexity notation in English (e.g., O(n log n))\n");
+    }
+    if has_formulas {
+        additional_requirements.push_str("- **Formulas**: Formula names and explanations in Chinese, LaTeX notation can stay in English\n");
+    }
+    if has_related_papers {
+        additional_requirements.push_str("- **Related papers**: Keep paper titles in English (original titles), relationship types in English as specified in schema, and reasons in Chinese\n");
+    }
 
     format!(
         "\n\n===== LANGUAGE REQUIREMENTS =====\n\
@@ -129,11 +162,7 @@ fn build_language_instruction(language: &str, blocks: &[AnalysisBlockConfig], de
         {}\
         - Tags and topics must be technical terms in English (e.g., \"reinforcement-learning\", \"LLM\", \"transformer\")",
         if has_experiments { ", experiment_completeness_reason" } else { "" },
-        if has_complexity {
-            "- Complexity notation: Use LaTeX/O notation in English (e.g., O(n log n)), but explanation in Chinese\n"
-        } else {
-            ""
-        }
+        if additional_requirements.is_empty() { String::new() } else { format!("\n{}", additional_requirements) }
     )
 }
 
@@ -249,14 +278,23 @@ fn build_json_schema(blocks: &[AnalysisBlockConfig]) -> String {
     let mut sorted_blocks = blocks.to_vec();
     sorted_blocks.sort_by_key(|b| b.order);
 
+    eprintln!("[build_json_schema] Building schema for {} blocks", blocks.len());
+
     for block in &sorted_blocks {
         let schema = get_block_json_schema(block);
         if !schema.is_empty() {
+            eprintln!("[build_json_schema] Adding schema for block '{}': {}", block.id,
+                schema.lines().take(1).collect::<String>());
             schema_parts.push(schema);
+        } else {
+            eprintln!("[build_json_schema] Block '{}' returned empty schema", block.id);
         }
     }
 
-    schema_parts.join(",\n  ")
+    let result = schema_parts.join(",\n  ");
+    eprintln!("[build_json_schema] Final schema fields: {}",
+        result.lines().filter(|l| l.contains(':')).map(|l| l.split(':').next().unwrap_or("")).collect::<Vec<_>>().join(", "));
+    result
 }
 
 /// Get JSON schema for a specific block

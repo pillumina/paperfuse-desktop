@@ -162,7 +162,6 @@
     "codeResources": "代码与资源",
     "keyFormulas": "关键公式",
     "keyAlgorithms": "关键算法",
-    "relatedPapers": "相关论文",
     "flowDiagram": "流程图",
     "methodOverview": "方法概览",
     "quality": {
@@ -225,6 +224,7 @@
       "code": "代码"
     },
     "relatedPapers": {
+      "title": "相关论文",
       "relationship": {
         "builds_on": "基于",
         "improves_upon": "改进了",

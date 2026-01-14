@@ -162,7 +162,6 @@
     "codeResources": "Code & Resources",
     "keyFormulas": "Key Formulas",
     "keyAlgorithms": "Key Algorithms",
-    "relatedPapers": "Related Papers",
     "flowDiagram": "Flow Diagram",
     "methodOverview": "Method Overview",
     "quality": {
@@ -225,6 +224,7 @@
       "code": "Code"
     },
     "relatedPapers": {
+      "title": "Related Papers",
       "relationship": {
         "builds_on": "Builds on",
         "improves_upon": "Improves upon",

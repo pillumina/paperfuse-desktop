@@ -2,7 +2,7 @@ pub mod paper;
 pub mod settings;
 pub mod collection;
 
-pub use paper::{Paper, ArxivPaper, AuthorInfo, KeyFormula, Algorithm, FlowDiagram};
+pub use paper::{Paper, ArxivPaper, AuthorInfo, KeyFormula, Algorithm, FlowDiagram, RelatedPaper, PaperRelationship};
 pub use settings::{
     Settings, LLMProvider, ScheduleFrequency, TopicConfig,
     FetchOptions, FetchResult, FetchStatus, FetchStatusState,

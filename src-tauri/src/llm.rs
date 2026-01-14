@@ -69,6 +69,31 @@ pub struct StandardAnalysisResult {
     pub key_insights: Vec<String>,
     pub suggested_tags: Vec<String>,
     pub suggested_topics: Vec<String>,
+    pub related_papers: Vec<RelatedPaper>,  // Related works
+}
+
+/// Related paper reference
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RelatedPaper {
+    pub arxiv_id: String,
+    pub title: String,
+    pub relationship: PaperRelationship,
+    #[serde(default)]
+    pub relevance_score: Option<i32>,  // 0-10 - optional for robustness
+    #[serde(default)]
+    pub reason: Option<String>,         // optional for robustness
+}
+
+/// Relationship type to related paper
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum PaperRelationship {
+    BuildsOn,
+    ImprovesUpon,
+    CompetingWith,
+    CitedBy,
+    SimilarTo,
 }
 
 /// Phase 2: Full mode analysis result
@@ -86,6 +111,7 @@ pub struct FullAnalysisResult {
     pub key_insights: Vec<String>,
     pub suggested_tags: Vec<String>,
     pub suggested_topics: Vec<String>,
+    pub related_papers: Vec<RelatedPaper>,
 
     // Additional fields for full mode
     pub experiment_completeness_score: i32,  // 0-10

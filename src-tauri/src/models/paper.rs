@@ -46,6 +46,31 @@ pub struct Paper {
     pub analysis_mode: Option<String>,      // 'standard' or 'full'
     pub analysis_incomplete: bool,          // LaTeX download failed
     pub pdf_local_path: Option<String>,     // Local path to downloaded PDF
+    pub related_papers: Option<Vec<RelatedPaper>>,  // Related works identified during analysis
+}
+
+/// Related paper reference
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RelatedPaper {
+    pub arxiv_id: String,
+    pub title: String,
+    pub relationship: PaperRelationship,
+    #[serde(default)]
+    pub relevance_score: Option<i32>,  // 0-10 - optional for robustness
+    #[serde(default)]
+    pub reason: Option<String>,         // optional for robustness
+}
+
+/// Relationship type to related paper
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum PaperRelationship {
+    BuildsOn,
+    ImprovesUpon,
+    CompetingWith,
+    CitedBy,
+    SimilarTo,
 }
 
 /// Key formula from a paper
@@ -125,6 +150,7 @@ impl Paper {
             analysis_mode: None,
             analysis_incomplete: false,
             pdf_local_path: None,
+            related_papers: None,
         }
     }
 
@@ -200,6 +226,7 @@ mod tests {
             analysis_mode: None,
             analysis_incomplete: false,
             pdf_local_path: None,
+            related_papers: None,
         };
 
         paper.touch();

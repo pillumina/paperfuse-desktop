@@ -137,11 +137,13 @@ impl LlmCache {
     }
 
     /// Check if cache exists for a paper
+    #[allow(dead_code)]
     pub fn exists(&self, paper_id: &str, mode: &str) -> bool {
         self.cache_file_path(paper_id, mode).exists()
     }
 
     /// Clear all cache files (for cleanup)
+    #[allow(dead_code)]
     pub fn clear_all(&self) -> Result<(), LlmError> {
         let entries = fs::read_dir(&self.cache_dir)
             .map_err(|e| LlmError::ParseError(format!("Failed to read cache directory: {}", e)))?;
@@ -173,6 +175,7 @@ impl LlmCache {
     }
 
     /// Get cache age in seconds
+    #[allow(dead_code)]
     pub fn cache_age(&self, paper_id: &str, mode: &str) -> Option<i64> {
         let cache_path = self.cache_file_path(paper_id, mode);
 

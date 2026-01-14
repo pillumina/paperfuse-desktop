@@ -283,6 +283,7 @@ pub fn get_all_blocks() -> Vec<AnalysisBlockConfig> {
 }
 
 /// Get block by ID
+#[allow(dead_code)]
 pub fn get_block(id: &str) -> Option<AnalysisBlockConfig> {
     get_all_blocks()
         .into_iter()

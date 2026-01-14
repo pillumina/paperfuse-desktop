@@ -11,6 +11,13 @@ use std::pin::Pin;
 use std::sync::Arc;
 use thiserror::Error;
 
+/// LLM API configuration constants
+const DEFAULT_TEMPERATURE: f32 = 0.3;
+const RELEVANCE_TOKEN_LIMIT: i32 = 5000;
+const STANDARD_TOKEN_LIMIT: i32 = 30000;
+const FULL_TOKEN_LIMIT: i32 = 100000;
+const DEFAULT_TOKEN_LIMIT: i32 = 2000;
+
 /// Errors that can occur during LLM operations
 #[derive(Debug, Error, Clone)]
 pub enum LlmError {
@@ -670,10 +677,10 @@ impl LlmClient {
     /// Get max_tokens for different analysis types
     fn get_max_tokens(&self, analysis_type: &str) -> i32 {
         match analysis_type {
-            "relevance" => 5000,      // Phase 1: Simple relevance check
-            "standard" => 30000,      // Phase 2 Standard: Medium response with many fields
-            "full" => 100000,         // Phase 2 Full: Long response with all fields including flowchart
-            _ => 2000,                // Default fallback
+            "relevance" => RELEVANCE_TOKEN_LIMIT,
+            "standard" => STANDARD_TOKEN_LIMIT,
+            "full" => FULL_TOKEN_LIMIT,
+            _ => DEFAULT_TOKEN_LIMIT,
         }
     }
 
@@ -979,7 +986,7 @@ impl LlmClient {
                 role: "user".to_string(),
                 content: prompt.to_string(),
             }],
-            temperature: 0.3,
+            temperature: DEFAULT_TEMPERATURE,
             max_tokens,
         };
 
@@ -1101,7 +1108,7 @@ impl LlmClient {
                 content: prompt.to_string(),
             }],
             max_tokens,
-            temperature: 0.3,
+            temperature: DEFAULT_TEMPERATURE,
         };
 
         let response = self

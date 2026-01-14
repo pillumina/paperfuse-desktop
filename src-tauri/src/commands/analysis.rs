@@ -113,7 +113,7 @@ pub async fn analyze_paper(
     let analysis_config = settings.analysis_config.unwrap_or_default();
 
     // Fix basic blocks mode - they should always be Both
-    let analysis_config = fix_basic_blocks_mode(analysis_config);
+    let analysis_config = crate::analysis::fix_basic_blocks_mode(analysis_config);
 
     eprintln!("[analyze_paper] Using analysis config with {} blocks", analysis_config.blocks.len());
 
@@ -409,28 +409,4 @@ fn update_paper_with_full_analysis(paper: &mut Paper, result: FullAnalysisResult
     paper.algorithm_flowchart = result.algorithm_flowchart;
     paper.time_complexity = result.time_complexity;
     paper.space_complexity = result.space_complexity;
-}
-
-/// Ensure basic blocks (ai_summary, topics) always have mode=Both
-fn fix_basic_blocks_mode(config: crate::analysis::UserAnalysisConfig) -> crate::analysis::UserAnalysisConfig {
-    use crate::analysis::BlockRunMode;
-
-    let blocks = config.blocks.into_iter().map(|mut block| {
-        // Basic blocks should always have mode=Both
-        if is_basic_block(&block.block_id) {
-            if block.mode != BlockRunMode::Both {
-                eprintln!("[fix_basic_blocks_mode] Correcting mode for basic block '{}' from {:?} to Both",
-                    block.block_id, block.mode);
-                block.mode = BlockRunMode::Both;
-            }
-        }
-        block
-    }).collect();
-
-    crate::analysis::UserAnalysisConfig { blocks }
-}
-
-/// Check if a block ID is a basic block
-fn is_basic_block(block_id: &str) -> bool {
-    matches!(block_id, "ai_summary" | "topics")
 }

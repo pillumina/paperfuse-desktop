@@ -34,6 +34,7 @@ impl AnalysisRegistry {
     }
 
     /// Get a specific block by ID
+    #[allow(dead_code)]
     pub fn get(&self, id: &str) -> Option<AnalysisBlockConfig> {
         self.blocks
             .read()
@@ -43,6 +44,7 @@ impl AnalysisRegistry {
     }
 
     /// Check if a block exists
+    #[allow(dead_code)]
     pub fn has(&self, id: &str) -> bool {
         self.blocks
             .read()

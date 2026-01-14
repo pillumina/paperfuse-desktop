@@ -3,11 +3,12 @@
 
 use select::document::Document;
 use select::node::Node;
-use select::predicate::{Attr, Class, Name, Predicate};
+use select::predicate::{Class, Name, Predicate};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 #[derive(Debug, Error)]
+#[allow(dead_code)]
 pub enum HtmlParseError {
     #[error("Failed to fetch HTML: {0}")]
     FetchError(String),
@@ -32,6 +33,7 @@ pub enum ContentSource {
 }
 
 /// Extracted section from HTML
+#[allow(dead_code)]
 pub struct Section {
     pub title: String,
     pub level: u8,           // 1-6 for h1-h6
@@ -40,6 +42,7 @@ pub struct Section {
 }
 
 /// Extracted content from ArXiv HTML
+#[allow(dead_code)]
 pub struct ExtractedContent {
     pub source: ContentSource,
     pub r#abstract: Option<String>,     // Abstract section (r#abstract needed since 'abstract' is reserved)
@@ -181,7 +184,7 @@ pub fn extract_sections_by_name(
 }
 
 /// Find the document root element
-fn find_document_root(document: &Document) -> Node {
+fn find_document_root(document: &Document) -> Node<'_> {
     // Try to find <article class="ltx_document">
     if let Some(root) = document.find(Class("ltx_document")).into_iter().next() {
         return root;
@@ -328,6 +331,7 @@ fn clean_title(full_title: &str) -> String {
 }
 
 /// Extract all available section names from HTML (for metadata)
+#[allow(dead_code)]
 pub fn extract_available_sections(html: &str) -> Vec<String> {
     let document = Document::from(html);
     let mut sections = Vec::new();

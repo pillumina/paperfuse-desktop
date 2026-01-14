@@ -35,6 +35,54 @@ pub enum PaperError {
 
 pub type Result<T> = std::result::Result<T, PaperError>;
 
+/// Serialized paper data ready for database insertion
+struct SerializedPaperData {
+    authors_json: String,
+    tags_json: String,
+    topics_json: String,
+    insights_json: Option<String>,
+    links_json: Option<String>,
+    related_papers_json: Option<String>,
+    available_sections_json: Option<String>,
+}
+
+/// Serialize paper fields to JSON for database storage
+fn serialize_paper_fields(paper: &Paper) -> Result<SerializedPaperData> {
+    let authors_json = serde_json::to_string(&paper.authors)
+        .map_err(|e| PaperError::Serialization(e.to_string()))?;
+    let tags_json = serde_json::to_string(&paper.tags)
+        .map_err(|e| PaperError::Serialization(e.to_string()))?;
+    let topics_json = serde_json::to_string(&paper.topics)
+        .map_err(|e| PaperError::Serialization(e.to_string()))?;
+
+    let insights_json = paper.key_insights.as_ref()
+        .map(|v| serde_json::to_string(v))
+        .transpose()
+        .map_err(|e| PaperError::Serialization(e.to_string()))?;
+    let links_json = paper.code_links.as_ref()
+        .map(|v| serde_json::to_string(v))
+        .transpose()
+        .map_err(|e| PaperError::Serialization(e.to_string()))?;
+    let related_papers_json = paper.related_papers.as_ref()
+        .map(|v| serde_json::to_string(v))
+        .transpose()
+        .map_err(|e| PaperError::Serialization(e.to_string()))?;
+    let available_sections_json = paper.available_sections.as_ref()
+        .map(|v| serde_json::to_string(v))
+        .transpose()
+        .map_err(|e| PaperError::Serialization(e.to_string()))?;
+
+    Ok(SerializedPaperData {
+        authors_json,
+        tags_json,
+        topics_json,
+        insights_json,
+        links_json,
+        related_papers_json,
+        available_sections_json,
+    })
+}
+
 /// Repository for paper database operations
 #[derive(Clone)]
 pub struct PaperRepository {
@@ -52,30 +100,9 @@ impl PaperRepository {
     pub async fn save_if_not_exists(&self, paper: &Paper) -> Result<bool> {
         eprintln!("[PaperRepository::save_if_not_exists] Attempting to save paper: id={}, topics_count={}", paper.id, paper.topics.len());
 
-        let authors_json = serde_json::to_string(&paper.authors)
-            .map_err(|e| PaperError::Serialization(e.to_string()))?;
-        let tags_json = serde_json::to_string(&paper.tags)
-            .map_err(|e| PaperError::Serialization(e.to_string()))?;
-        let topics_json = serde_json::to_string(&paper.topics)
-            .map_err(|e| PaperError::Serialization(e.to_string()))?;
+        let serialized = serialize_paper_fields(paper)?;
 
-        eprintln!("[PaperRepository::save_if_not_exists] Serialized data: topics_json={}", topics_json);
-        let insights_json = paper.key_insights.as_ref()
-            .map(|v| serde_json::to_string(v))
-            .transpose()
-            .map_err(|e| PaperError::Serialization(e.to_string()))?;
-        let links_json = paper.code_links.as_ref()
-            .map(|v| serde_json::to_string(v))
-            .transpose()
-            .map_err(|e| PaperError::Serialization(e.to_string()))?;
-        let related_papers_json = paper.related_papers.as_ref()
-            .map(|v| serde_json::to_string(v))
-            .transpose()
-            .map_err(|e| PaperError::Serialization(e.to_string()))?;
-        let available_sections_json = paper.available_sections.as_ref()
-            .map(|v| serde_json::to_string(v))
-            .transpose()
-            .map_err(|e| PaperError::Serialization(e.to_string()))?;
+        eprintln!("[PaperRepository::save_if_not_exists] Serialized data: topics_json={}", serialized.topics_json);
 
         let result = sqlx::query(
             r#"
@@ -99,14 +126,14 @@ impl PaperRepository {
         .bind(&paper.id)
         .bind(&paper.arxiv_id)
         .bind(&paper.title)
-        .bind(&authors_json)
+        .bind(&serialized.authors_json)
         .bind(&paper.summary)
         .bind(&paper.ai_summary)
-        .bind(&insights_json)
+        .bind(&serialized.insights_json)
         .bind(&paper.engineering_notes)
-        .bind(&links_json)
-        .bind(&tags_json)
-        .bind(&topics_json)
+        .bind(&serialized.links_json)
+        .bind(&serialized.tags_json)
+        .bind(&serialized.topics_json)
         .bind(&paper.published_date)
         .bind(&paper.arxiv_url)
         .bind(&paper.pdf_url)
@@ -131,10 +158,10 @@ impl PaperRepository {
         .bind(paper.analysis_incomplete)
         .bind(false)  // is_spam defaults to false for new papers
         .bind(&paper.pdf_local_path)
-        .bind(&related_papers_json)
+        .bind(&serialized.related_papers_json)
         .bind(&paper.content_source)
         .bind(paper.estimated_tokens)
-        .bind(&available_sections_json)
+        .bind(&serialized.available_sections_json)
         .execute(&self.pool)
         .await?;
 
@@ -154,31 +181,10 @@ impl PaperRepository {
         eprintln!("[PaperRepository::save] Saving paper: id={}, title={}, is_deep_analyzed={}, analysis_mode={}, topics_count={}",
             paper.id, paper.title.chars().take(50).collect::<String>(), paper.is_deep_analyzed, paper.analysis_mode.as_deref().unwrap_or("none"), paper.topics.len());
 
-        let authors_json = serde_json::to_string(&paper.authors)
-            .map_err(|e| PaperError::Serialization(e.to_string()))?;
-        let tags_json = serde_json::to_string(&paper.tags)
-            .map_err(|e| PaperError::Serialization(e.to_string()))?;
-        let topics_json = serde_json::to_string(&paper.topics)
-            .map_err(|e| PaperError::Serialization(e.to_string()))?;
-        let insights_json = paper.key_insights.as_ref()
-            .map(|v| serde_json::to_string(v))
-            .transpose()
-            .map_err(|e| PaperError::Serialization(e.to_string()))?;
-        let links_json = paper.code_links.as_ref()
-            .map(|v| serde_json::to_string(v))
-            .transpose()
-            .map_err(|e| PaperError::Serialization(e.to_string()))?;
-        let related_papers_json = paper.related_papers.as_ref()
-            .map(|v| serde_json::to_string(v))
-            .transpose()
-            .map_err(|e| PaperError::Serialization(e.to_string()))?;
-        let available_sections_json = paper.available_sections.as_ref()
-            .map(|v| serde_json::to_string(v))
-            .transpose()
-            .map_err(|e| PaperError::Serialization(e.to_string()))?;
+        let serialized = serialize_paper_fields(paper)?;
 
         eprintln!("[PaperRepository::save] Serialized data: authors_len={}, tags_len={}, topics_json={}, insights={:?}, links={:?}, related_papers={:?}",
-            authors_json.len(), tags_json.len(), topics_json, insights_json.is_some(), links_json.is_some(), related_papers_json.is_some());
+            serialized.authors_json.len(), serialized.tags_json.len(), serialized.topics_json, serialized.insights_json.is_some(), serialized.links_json.is_some(), serialized.related_papers_json.is_some());
 
         let result = sqlx::query(
             r#"
@@ -235,14 +241,14 @@ impl PaperRepository {
         .bind(&paper.id)
         .bind(&paper.arxiv_id)
         .bind(&paper.title)
-        .bind(&authors_json)
+        .bind(&serialized.authors_json)
         .bind(&paper.summary)
         .bind(&paper.ai_summary)
-        .bind(&insights_json)
+        .bind(&serialized.insights_json)
         .bind(&paper.engineering_notes)
-        .bind(&links_json)
-        .bind(&tags_json)
-        .bind(&topics_json)
+        .bind(&serialized.links_json)
+        .bind(&serialized.tags_json)
+        .bind(&serialized.topics_json)
         .bind(&paper.published_date)
         .bind(&paper.arxiv_url)
         .bind(&paper.pdf_url)
@@ -267,10 +273,10 @@ impl PaperRepository {
         .bind(paper.analysis_incomplete)
         .bind(false)  // is_spam defaults to false for new papers
         .bind(&paper.pdf_local_path)
-        .bind(&related_papers_json)
+        .bind(&serialized.related_papers_json)
         .bind(&paper.content_source)
         .bind(paper.estimated_tokens)
-        .bind(&available_sections_json)
+        .bind(&serialized.available_sections_json)
         .execute(&self.pool)
         .await;
 

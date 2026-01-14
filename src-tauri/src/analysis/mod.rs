@@ -149,6 +149,28 @@ pub fn build_analysis_prompt(
     prompt::build_prompt(title, summary, topics, latex_content, language, user_config, depth)
 }
 
+/// Ensure basic blocks (ai_summary, topics) always have mode=Both
+pub fn fix_basic_blocks_mode(config: UserAnalysisConfig) -> UserAnalysisConfig {
+    let blocks = config.blocks.into_iter().map(|mut block| {
+        // Basic blocks should always have mode=Both
+        if is_basic_block(&block.block_id) {
+            if block.mode != BlockRunMode::Both {
+                eprintln!("[fix_basic_blocks_mode] Correcting mode for basic block '{}' from {:?} to Both",
+                    block.block_id, block.mode);
+                block.mode = BlockRunMode::Both;
+            }
+        }
+        block
+    }).collect();
+
+    UserAnalysisConfig { blocks }
+}
+
+/// Check if a block ID is a basic block
+pub fn is_basic_block(block_id: &str) -> bool {
+    matches!(block_id, "ai_summary" | "topics")
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

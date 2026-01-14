@@ -1,7 +1,7 @@
 use crate::database::{SettingsRepository, ClassificationCacheRepository};
 use crate::models::Settings;
 use crate::database::classification_cache::CacheStats;
-use crate::analysis::{AnalysisBlockConfig, UserAnalysisConfig, BlockRunMode};
+use crate::analysis::{AnalysisBlockConfig, UserAnalysisConfig};
 use crate::analysis::registry::REGISTRY;
 use sqlx::SqlitePool;
 use tauri::State;
@@ -152,32 +152,10 @@ pub async fn get_analysis_config(
     let config = settings.analysis_config.unwrap_or_default();
 
     // Fix basic blocks mode - they should always be Both
-    let fixed_config = fix_basic_blocks_mode(config);
+    let fixed_config = crate::analysis::fix_basic_blocks_mode(config);
     eprintln!("[get_analysis_config] Returning config with {} blocks", fixed_config.blocks.len());
 
     Ok(fixed_config)
-}
-
-/// Ensure basic blocks (ai_summary, topics) always have mode=Both
-fn fix_basic_blocks_mode(config: UserAnalysisConfig) -> UserAnalysisConfig {
-    let blocks = config.blocks.into_iter().map(|mut block| {
-        // Basic blocks should always have mode=Both
-        if is_basic_block(&block.block_id) {
-            if block.mode != BlockRunMode::Both {
-                eprintln!("[fix_basic_blocks_mode] Correcting mode for basic block '{}' from {:?} to Both",
-                    block.block_id, block.mode);
-                block.mode = BlockRunMode::Both;
-            }
-        }
-        block
-    }).collect();
-
-    UserAnalysisConfig { blocks }
-}
-
-/// Check if a block ID is a basic block
-fn is_basic_block(block_id: &str) -> bool {
-    matches!(block_id, "ai_summary" | "topics")
 }
 
 /// Save user's analysis configuration

@@ -9,7 +9,7 @@ use crate::html_parser::extract_sections_by_name;
 use crate::latex_parser::extract_intro_conclusion;
 use crate::llm::{self, LlmClient, LlmError, RelevanceResult};
 use crate::llm_cache::LlmCache;
-use crate::models::{FetchOptions, FetchStatus, LLMProvider, Paper, TopicConfig};
+use crate::models::{FetchOptions, FetchStatus, Paper, TopicConfig};
 use queue::{TaskQueue, QueuedTask};
 use sqlx::SqlitePool;
 use std::sync::Arc;
@@ -17,6 +17,20 @@ use thiserror::Error;
 use tokio::sync::Mutex;
 use tokio_util::sync::CancellationToken;
 use uuid::Uuid;
+
+/// Progress calculation constants
+const MIN_PROGRESS: f32 = 0.1;
+const MAX_PROGRESS_RATIO: f32 = 0.9;
+const PROGRESS_MULTIPLIER: f32 = 0.8;
+
+/// Calculate fetch progress based on processed/total ratio
+fn calculate_progress(processed: usize, total: usize) -> f32 {
+    if total == 0 {
+        return MIN_PROGRESS;
+    }
+    let ratio = (processed as f32 / total as f32).min(MAX_PROGRESS_RATIO);
+    MIN_PROGRESS + ratio * PROGRESS_MULTIPLIER
+}
 
 /// Errors that can occur during fetch operations
 #[derive(Debug, Error)]
@@ -302,7 +316,7 @@ async fn perform_modular_analysis(
     let analysis_config = settings.analysis_config.unwrap_or_default();
 
     // Fix basic blocks mode - they should always be Both
-    let analysis_config = fix_basic_blocks_mode(analysis_config);
+    let analysis_config = crate::analysis::fix_basic_blocks_mode(analysis_config);
 
     eprintln!("[perform_modular_analysis] Using config with {} blocks for {:?} analysis",
         analysis_config.blocks.len(), depth);
@@ -824,9 +838,8 @@ impl FetchManager {
                         status.queue_size = total_papers.saturating_sub(total_processed).saturating_sub(status.active_tasks);
                         status.async_mode = true;
 
-                        // Calculate progress based on total processed (clamped to 0.9 max)
-                        let progress_ratio = (total_processed as f32 / total_papers as f32).min(0.9);
-                        status.progress = 0.1 + progress_ratio * 0.8;
+                        // Calculate progress based on total processed
+                        status.progress = calculate_progress(total_processed, total_papers);
 
                         // Create detailed step message
                         let skip_summary = vec![
@@ -938,9 +951,8 @@ impl FetchManager {
                                 status.queue_size = total_papers.saturating_sub(total_processed).saturating_sub(status.active_tasks);
                                 status.async_mode = true;
 
-                                // Calculate progress based on total processed (clamped to 0.9 max)
-                                let progress_ratio = (total_processed as f32 / total_papers as f32).min(0.9);
-                                status.progress = 0.1 + progress_ratio * 0.8;
+                                // Calculate progress based on total processed
+                                status.progress = calculate_progress(total_processed, total_papers);
 
                                 // Create detailed step message
                                 let skip_summary = vec![
@@ -1280,7 +1292,7 @@ impl FetchManager {
                 };
 
                 content_source = Some("latex".to_string());
-                estimated_tokens = None;
+                estimated_tokens = Some((latex_content.len() / 4) as i32);
                 available_sections = None;
                 content_str = latex_content;
             }
@@ -1288,7 +1300,8 @@ impl FetchManager {
 
         // Use the new modular system
         let content = if content_str.is_empty() { None } else { Some(content_str.as_str()) };
-        let is_fallback = content.is_none() || content_source == Some("latex".to_string());
+        // Mark as incomplete only if using abstract or no content (LaTeX and HTML are both complete)
+        let is_fallback = content.is_none() || content_source == Some("abstract".to_string());
 
         perform_modular_analysis(
             pool,
@@ -1379,7 +1392,9 @@ impl FetchManager {
                 }
 
                 content_source = latex_content.as_ref().map(|_| "latex".to_string()).or_else(|| Some("abstract".to_string()));
-                estimated_tokens = None;
+                // Estimate tokens based on content (LaTeX or abstract)
+                estimated_tokens = latex_content.as_ref()
+                    .map(|c| (c.len() / 4) as i32);
                 available_sections = None;
                 content_str = latex_content.unwrap_or_default();
             }
@@ -1387,7 +1402,8 @@ impl FetchManager {
 
         // Use the new modular system
         let content = if content_str.is_empty() { None } else { Some(content_str.as_str()) };
-        let is_fallback = content.is_none() || content_source == Some("latex".to_string());
+        // Mark as incomplete only if using abstract or no content (LaTeX and HTML are both complete)
+        let is_fallback = content.is_none() || content_source == Some("abstract".to_string());
 
         perform_modular_analysis(
             pool,
@@ -1677,13 +1693,8 @@ impl FetchManager {
                     }
                 };
 
-                // Calculate initial progress for this paper (clamped to 0.9 max for the 0.8 multiplier)
-                let progress = if effective_total > 0 {
-                    let progress_ratio = (actual_processed as f32 / effective_total as f32).min(0.9);
-                    0.1 + progress_ratio * 0.8
-                } else {
-                    0.1
-                };
+                // Calculate initial progress for this paper
+                let progress = calculate_progress(actual_processed, effective_total);
 
                 // Show initial status for this paper
                 self.update_status(
@@ -1723,13 +1734,7 @@ impl FetchManager {
                         let effective_total = entries.len().saturating_sub(result.papers_duplicates);
                         let effective_total = effective_total.max(1); // Avoid division by zero
 
-                        // Calculate progress (clamped to 0.9 max for the 0.8 multiplier)
-                        let progress = if effective_total > 0 {
-                            let progress_ratio = (actual_processed as f32 / effective_total as f32).min(0.9);
-                            0.1 + progress_ratio * 0.8
-                        } else {
-                            0.1
-                        };
+                        let progress = calculate_progress(actual_processed, effective_total);
 
                         // Show progress with total count (always shows X/10)
                         // Add summary of skips in parentheses
@@ -2095,7 +2100,9 @@ impl FetchManager {
                 }
 
                 content_source = Some("latex".to_string());
-                estimated_tokens = None;
+                // Estimate tokens based on content (LaTeX or abstract)
+                estimated_tokens = latex_content.as_ref()
+                    .map(|c| (c.len() / 4) as i32);
                 available_sections = None;
                 content_str = latex_content.unwrap_or_default();
             }
@@ -2103,7 +2110,8 @@ impl FetchManager {
 
         // Use the new modular system
         let content = if content_str.is_empty() { None } else { Some(content_str.as_str()) };
-        let is_fallback = content.is_none() || content_source == Some("latex".to_string());
+        // Mark as incomplete only if using abstract or no content (LaTeX and HTML are both complete)
+        let is_fallback = content.is_none() || content_source == Some("abstract".to_string());
 
         perform_modular_analysis(
             pool,
@@ -2192,7 +2200,7 @@ impl FetchManager {
                 };
 
                 content_source = Some("latex".to_string());
-                estimated_tokens = None;
+                estimated_tokens = Some((latex_content.len() / 4) as i32);
                 available_sections = None;
                 content_str = latex_content;
             }
@@ -2200,7 +2208,8 @@ impl FetchManager {
 
         // Use the new modular system
         let content = if content_str.is_empty() { None } else { Some(content_str.as_str()) };
-        let is_fallback = content.is_none() || content_source == Some("latex".to_string());
+        // Mark as incomplete only if using abstract or no content (LaTeX and HTML are both complete)
+        let is_fallback = content.is_none() || content_source == Some("abstract".to_string());
 
         perform_modular_analysis(
             pool,
@@ -2278,30 +2287,6 @@ impl FetchManager {
             emitter(new_status);
         }
     }
-}
-
-/// Ensure basic blocks (ai_summary, topics) always have mode=Both
-fn fix_basic_blocks_mode(config: crate::analysis::UserAnalysisConfig) -> crate::analysis::UserAnalysisConfig {
-    use crate::analysis::BlockRunMode;
-
-    let blocks = config.blocks.into_iter().map(|mut block| {
-        // Basic blocks should always have mode=Both
-        if is_basic_block(&block.block_id) {
-            if block.mode != BlockRunMode::Both {
-                eprintln!("[fix_basic_blocks_mode] Correcting mode for basic block '{}' from {:?} to Both",
-                    block.block_id, block.mode);
-                block.mode = BlockRunMode::Both;
-            }
-        }
-        block
-    }).collect();
-
-    crate::analysis::UserAnalysisConfig { blocks }
-}
-
-/// Check if a block ID is a basic block
-fn is_basic_block(block_id: &str) -> bool {
-    matches!(block_id, "ai_summary" | "topics")
 }
 
 #[cfg(test)]

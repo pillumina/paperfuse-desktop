@@ -104,6 +104,7 @@ fn find_next_section(full_content: &str, start_pos: usize) -> Option<usize> {
 
 /// Clean LaTeX content by removing comments, citations, and formatting commands
 /// This makes the content more suitable for LLM processing
+#[allow(dead_code)]
 pub fn clean_latex(latex_content: &str) -> String {
     let mut cleaned = latex_content.to_string();
 

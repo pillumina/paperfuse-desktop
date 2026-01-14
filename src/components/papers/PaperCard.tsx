@@ -5,6 +5,7 @@ import { PaperTags } from './PaperTags';
 import { HoverPreviewTooltip } from './HoverPreviewTooltip';
 import { ActionContextMenu } from './ActionContextMenu';
 import { AnalysisModeDialog, type AnalysisMode, type AnalysisLanguage } from './AnalysisModeDialog';
+import { AddToCollectionDialog } from '../collections/AddToCollectionDialog';
 import { getScoreColor } from '../../lib/utils';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { usePaperCollections } from '../../hooks/useCollections';
@@ -37,6 +38,7 @@ export function PaperCard({
   const { data: paperCollections } = usePaperCollections(paper.id);
   const [showActions, setShowActions] = useState(false);
   const [showAnalysisDialog, setShowAnalysisDialog] = useState(false);
+  const [showCollectionDialog, setShowCollectionDialog] = useState(false);
 
   // Check if paper is in any collection
   const isInAnyCollection = paperCollections && paperCollections.length > 0;
@@ -128,6 +130,22 @@ export function PaperCard({
             {/* Action Menu Button */}
             {onDelete && !isSelectionMode && (
               <div className="absolute top-3 right-3 z-10 flex items-center gap-1">
+                {/* Collection Toggle Button */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowCollectionDialog(true);
+                  }}
+                  className={`p-1.5 rounded-lg transition-colors opacity-0 group-hover:opacity-100 ${
+                    isInAnyCollection
+                      ? 'text-amber-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20'
+                      : 'text-gray-400 hover:text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20'
+                  }`}
+                  title={isInAnyCollection ? t('papers.contextMenu.addToCollection') : t('papers.card.inCollection')}
+                >
+                  <Star className={`w-4 h-4 ${isInAnyCollection ? 'fill-amber-500' : ''}`} />
+                </button>
+
                 {/* Quick Analyze Button */}
                 {onAnalyze && (
                   <button
@@ -310,6 +328,13 @@ export function PaperCard({
           }}
         />
       )}
+
+      {/* Add to Collection Dialog */}
+      <AddToCollectionDialog
+        isOpen={showCollectionDialog}
+        onClose={() => setShowCollectionDialog(false)}
+        paperId={paper.id}
+      />
     </>
   );
 }

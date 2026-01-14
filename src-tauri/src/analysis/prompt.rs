@@ -258,11 +258,13 @@ fn get_block_task_instruction(block: &AnalysisBlockConfig) -> &'static str {
              Use \\\\n to separate paragraphs."
         }
         "related_papers" => {
-            "Identify related papers by analyzing references and citations:\n\
-             - Look for papers that this work builds upon or improves\n\
-             - Identify competing or alternative approaches\n\
-             - Find papers with similar methodology or goals\n\
-             For each related paper, provide: arXiv ID, title, relationship type (builds_on/improves_upon/competing_with/similar_to), relevance score (0-10), and brief reason"
+            "Identify related papers mentioned in the paper content:\n\
+             - Look for papers mentioned in the introduction, related work section, or throughout the text\n\
+             - Focus on foundational work, competing methods, or papers being built upon\n\
+             - DO NOT fabricate or guess arXiv IDs - only use IDs explicitly mentioned in the text\n\
+             - If arXiv ID is not mentioned in the paper, set arXiv ID to \"UNKNOWN\"\n\
+             - Maximum 3-5 most relevant papers\n\
+             For each related paper: arXiv ID (or \"UNKNOWN\"), exact title as mentioned, relationship type, relevance score (0-10), and brief reason"
         }
         "algorithms" => "Extract key algorithms presented in the paper: for each algorithm, provide the name, a step-by-step description, and computational complexity if specified",
         "complexity" => "Analyze computational complexity: provide time complexity (big-O notation for runtime) and space complexity (memory usage) with explanations",

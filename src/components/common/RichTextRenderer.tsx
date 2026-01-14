@@ -18,12 +18,20 @@ export function RichTextRenderer({ content, className = '' }: RichTextRendererPr
   if (!content) return null;
 
   // Process content in order:
-  // 1. First, protect LaTeX expressions (replace with placeholders)
-  // 2. Apply Markdown formatting to remaining text
-  // 3. Restore LaTeX expressions
+  // 1. First, unescape JSON escaped characters (\\n -> \n, \\t -> \t)
+  // 2. Protect LaTeX expressions (replace with placeholders)
+  // 3. Apply Markdown formatting to remaining text
+  // 4. Restore LaTeX expressions
 
   const latexPlaceholders: Array<{ placeholder: string; latex: string; display: boolean }> = [];
   let processedContent = content;
+
+  // Unescape common JSON escape sequences
+  // Note: After JSON.parse(), "\\n" becomes two chars: backslash + 'n'
+  // We need to convert these to actual newlines
+  processedContent = processedContent
+    .replace(/\\n/g, '\n')   // Convert literal "\n" to newline
+    .replace(/\\t/g, '\t');  // Convert literal "\t" to tab
 
   // Pattern to match LaTeX expressions:
   // - $...$ for inline math (non-greedy, doesn't match $ inside)

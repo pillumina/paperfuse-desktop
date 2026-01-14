@@ -48,6 +48,7 @@
 - **Complexity Analysis** - Time and space complexity with LaTeX math rendering
 - **Multi-LLM Support** - Works with GLM (ZhipuAI) and Claude (Anthropic)
 - **Analysis Modes** - Choose between standard (quick) or full (comprehensive) analysis
+- **Smart Retry** - Automatically retries failed operations without wasting API credits
 
 ### 🌐 Internationalization
 - **Bilingual Interface** - Full support for English and Chinese (简体中文)
@@ -201,15 +202,18 @@ paperfuse-desktop/
 │   └── styles/                   # Global styles
 ├── src-tauri/                    # Backend (Rust)
 │   ├── src/
+│   │   ├── analysis/            # Modular analysis system
 │   │   ├── arxiv.rs             # ArXiv API client
 │   │   ├── commands/            # Tauri commands
 │   │   ├── database/            # Database layer (SQLite)
 │   │   ├── fetch.rs             # Fetch pipeline orchestration
-│   │   ├── llm/                 # LLM client (GLM, Claude)
+│   │   ├── html_parser.rs       # HTML parsing from arxiv.org/html
 │   │   ├── latex_parser.rs      # LaTeX parsing for math and algorithms
+│   │   ├── llm/                 # LLM client (GLM, Claude)
+│   │   ├── llm_cache.rs         # LLM response caching
+│   │   ├── models/              # Data models
 │   │   ├── retry/               # Retry logic with exponential backoff
-│   │   ├── scheduler/           # Scheduled fetch logic
-│   │   └── types.rs             # Shared types
+│   │   └── scheduler/           # Scheduled fetch logic
 │   ├── migrations/               # Database migrations
 │   ├── Cargo.toml               # Rust dependencies
 │   └── tauri.conf.json          # Tauri configuration
@@ -296,7 +300,7 @@ The app uses SQLite with the following main tables:
 - `paper_collections` - Many-to-many relationship between papers and collections
 - `fetch_history` - History of paper fetches
 - `topics` - Research topics for filtering
-- `settings` - Application settings including storage paths
+- `settings` - Application settings including storage paths, API keys, and analysis configuration
 
 ## 🐛 Troubleshooting
 
@@ -333,13 +337,15 @@ The app uses SQLite with the following main tables:
 
 ### Recently Completed ✨
 
+- [x] **Faster Paper Analysis** - HTML-first content extraction for faster, more reliable analysis
+- [x] **Smarter Content Filtering** - Automatically excludes References, Appendix, and other non-essential sections
+- [x] **More Reliable Retry** - Automatic LLM response caching prevents wasting API credits on failures
 - [x] PDF download and preview - Download PDFs locally and open in system default viewer
 - [x] Configurable storage paths - Set custom paths for LaTeX and PDF downloads
 - [x] Sort state persistence - Remember user's sort preferences across navigation
 - [x] Collection indicator badges - Visual indicators for papers in collections
 - [x] Collection quick filter - Fast filter to show only papers in collections
 - [x] Analysis language selection - Choose Chinese or English for AI analysis output
-- [x] Cancel button for analysis - Properly i18n'ed cancel button during analysis
 - [x] Optimized paper card layout - Improved grid view with better overflow handling
 
 ### Upcoming Features 🎯

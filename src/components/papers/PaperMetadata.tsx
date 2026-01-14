@@ -12,6 +12,12 @@ interface PaperMetadataProps {
 export function PaperMetadata({ paper, showScore = true, variant = 'default' }: PaperMetadataProps) {
   const { t } = useLanguage();
 
+  // Helper to format token count
+  const formatTokenCount = (tokens: number | null) => {
+    if (tokens == null) return null;
+    return `(~${(tokens / 1000).toFixed(1)}k tokens)`;
+  };
+
   // Format authors to display as names
   const formatAuthors = () => {
     return paper.authors.map(a => typeof a === 'string' ? a : a.name);
@@ -121,6 +127,24 @@ export function PaperMetadata({ paper, showScore = true, variant = 'default' }: 
           <span>{t('papers.detail.metadata.code')}</span>
         </div>
       )}
+
+      {/* Content Source Badge */}
+      {paper.content_source && paper.content_source !== 'abstract' && (() => {
+        const isHtml = paper.content_source === 'html';
+        const className = isHtml
+          ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400'
+          : 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400';
+        return (
+          <div className={`flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${className}`}>
+            <span>{t('papers.detail.metadata.contentSource')}: {isHtml ? 'HTML' : 'LaTeX'}</span>
+            {paper.estimated_tokens != null && (
+              <span className="opacity-75">
+                {formatTokenCount(paper.estimated_tokens)}
+              </span>
+            )}
+          </div>
+        );
+      })()}
     </div>
   );
 }

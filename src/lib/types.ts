@@ -99,6 +99,11 @@ export interface Paper {
   analysis_mode: 'standard' | 'full' | null;
   analysis_incomplete: boolean;
   related_papers?: RelatedPaper[];
+
+  // HTML parsing fields
+  content_source?: 'html' | 'latex' | 'abstract' | null;
+  estimated_tokens?: number | null;
+  available_sections?: string[] | null;
 }
 
 export interface KeyFormula {

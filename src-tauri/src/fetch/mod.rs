@@ -5,8 +5,11 @@ pub mod queue;
 use crate::arxiv::{self, ArxivEntry, FetchOptions as ArxivFetchOptions};
 use crate::analysis::AnalysisDepth;
 use crate::database::{PaperRepository, FetchHistoryRepository, FetchHistoryEntry, PaperSummary, SettingsRepository};
+use crate::html_parser::extract_sections_by_name;
+use crate::latex_parser::extract_intro_conclusion;
 use crate::llm::{self, LlmClient, LlmError, RelevanceResult};
-use crate::models::{FetchOptions, FetchStatus, Paper, TopicConfig};
+use crate::llm_cache::LlmCache;
+use crate::models::{FetchOptions, FetchStatus, LLMProvider, Paper, TopicConfig};
 use queue::{TaskQueue, QueuedTask};
 use sqlx::SqlitePool;
 use std::sync::Arc;
@@ -132,6 +135,88 @@ struct RelevanceAnalysisWithCache {
     from_cache: bool,
 }
 
+/// Content mode for fetching
+#[derive(Debug, Clone, Copy)]
+pub enum ContentMode {
+    Standard, // Introduction + Conclusion
+    Full,     // All sections
+}
+
+/// Unified content fetching result
+#[derive(Debug, Clone)]
+pub struct FetchedContent {
+    pub source: String,              // "html", "latex", "abstract"
+    pub content: String,             // Markdown format
+    pub estimated_tokens: usize,
+    pub available_sections: Vec<String>,
+}
+
+/// Fetch paper content with HTML-first fallback to LaTeX
+/// This is the main entry point for content fetching
+pub async fn fetch_paper_content(
+    entry: &ArxivEntry,
+    mode: ContentMode,
+) -> Result<FetchedContent, FetchError> {
+    // 1. Try HTML first (faster, more reliable)
+    eprintln!("[fetch_paper_content] Attempting HTML download...");
+    let html_result = entry.download_html().await;
+
+    if let Ok(html) = html_result {
+        eprintln!("[fetch_paper_content] HTML available, parsing...");
+
+        let section_names = match mode {
+            ContentMode::Standard => &["Introduction", "Conclusion"][..],
+            ContentMode::Full => &[], // Empty means all sections
+        };
+
+        match extract_sections_by_name(&html, section_names) {
+            Ok(mut extracted) => {
+                // If no sections matched in Standard mode, fall back to all sections
+                if matches!(mode, ContentMode::Standard) && extracted.sections.is_empty() {
+                    eprintln!("[fetch_paper_content] No matching sections found, using all sections");
+                    extracted = extract_sections_by_name(&html, &[]).map_err(|e| {
+                        FetchError::NetworkError(format!("HTML parsing failed: {}", e))
+                    })?;
+                }
+
+                // Build content with abstract first, then sections
+                let mut content_parts = Vec::new();
+
+                // Add abstract if available (important context for LLM)
+                if let Some(abstract_text) = &extracted.r#abstract {
+                    content_parts.push(format!("## Abstract\n\n{}", abstract_text));
+                }
+
+                // Add sections with their HTML content
+                for section in &extracted.sections {
+                    content_parts.push(section.html_content.clone());
+                }
+
+                let content = content_parts.join("\n\n");
+
+                return Ok(FetchedContent {
+                    source: "html".to_string(),
+                    content,
+                    estimated_tokens: extracted.estimated_tokens,
+                    available_sections: extracted.available_sections,
+                });
+            }
+            Err(e) => {
+                eprintln!("[fetch_paper_content] HTML parsing failed: {}, falling back to LaTeX", e);
+            }
+        }
+    } else {
+        eprintln!(
+            "[fetch_paper_content] HTML not available: {:?}, using LaTeX",
+            html_result.err()
+        );
+    }
+
+    // 2. Fallback to LaTeX
+    eprintln!("[fetch_paper_content] Using LaTeX fallback...");
+    Err(FetchError::NetworkError("HTML not available, use LaTeX fallback".to_string()))
+}
+
 /// Helper to create idle fetch status
 fn idle_status() -> FetchStatus {
     FetchStatus {
@@ -235,12 +320,50 @@ async fn perform_modular_analysis(
 
     eprintln!("[perform_modular_analysis] Generated prompt ({} chars)", prompt.chars().count());
 
-    // Send to LLM
-    let response = client.send_chat_request(&prompt, depth.as_str()).await
-        .map_err(|e| {
-            eprintln!("[perform_modular_analysis] LLM request failed: {}", e);
-            FetchError::LlmError(e)
-        })?;
+    // Initialize cache
+    let cache = LlmCache::new().map_err(|e| {
+        eprintln!("[perform_modular_analysis] Failed to initialize cache: {}", e);
+        FetchError::NetworkError(format!("Failed to initialize cache: {}", e))
+    })?;
+
+    // Get provider and model info for cache
+    let provider = settings.llm_provider.clone();
+    let provider_str = format!("{:?}", provider);
+    let model_for_cache = settings.glm_quick_model.clone()
+        .or(settings.claude_quick_model.clone())
+        .or(settings.glm_deep_model.clone())
+        .or(settings.claude_deep_model.clone());
+
+    let analysis_mode = depth.as_str().to_string();
+
+    // Try to load from cache first
+    let response = if let Ok(cached_response) = cache.load(&paper.id, &analysis_mode, &prompt) {
+        eprintln!("[perform_modular_analysis] Using cached LLM response");
+        cached_response
+    } else {
+        eprintln!("[perform_modular_analysis] No cache hit, calling LLM API...");
+
+        // Send to LLM
+        let llm_response = client.send_chat_request(&prompt, depth.as_str()).await
+            .map_err(|e| {
+                eprintln!("[perform_modular_analysis] LLM request failed: {}", e);
+                FetchError::LlmError(e)
+            })?;
+
+        // Save response to cache immediately (before parsing)
+        if let Err(e) = cache.save(
+            &paper.id,
+            &analysis_mode,
+            &llm_response,
+            &prompt,
+            &provider_str,
+            model_for_cache.as_deref(),
+        ) {
+            eprintln!("[perform_modular_analysis] Warning: Failed to save to cache: {}", e);
+        }
+
+        llm_response
+    };
 
     // Clean and fix response
     let cleaned = client.clean_response(&response);
@@ -337,6 +460,8 @@ async fn perform_modular_analysis(
         }
     }
 
+    // Note: Cache deletion should happen AFTER successful database save
+    // Do not delete cache here - only delete after repo.save() succeeds
     Ok(())
 }
 
@@ -976,6 +1101,15 @@ impl FetchManager {
             .await
             .map_err(|e| FetchError::DatabaseError(e.to_string()))?;
 
+        // Delete LLM response cache after successful save (if analysis was performed)
+        if was_inserted {
+            if let Some(analysis_mode) = &paper.analysis_mode {
+                if let Ok(cache) = LlmCache::new() {
+                    let _ = cache.delete(&paper.id, analysis_mode);
+                }
+            }
+        }
+
         // Create paper summary if saved
         let paper_summary = if was_inserted {
             Some(PaperSummary {
@@ -1057,29 +1191,17 @@ impl FetchManager {
         options: &FetchOptions,
         latex_download_path: Option<&str>,
     ) -> Result<(), FetchError> {
-        use std::path::Path;
-
         let analysis_mode = options.analysis_mode.as_deref().unwrap_or("standard");
         let language = options.language.as_deref().unwrap_or("en");
 
-        // Download LaTeX if path is configured
-        let latex_result = if let Some(download_path) = latex_download_path {
-            let path = Path::new(download_path);
-            Some(entry.download_latex_source(path).await
-                .map_err(|e| FetchError::NetworkError(format!("LaTeX download failed: {}", e))))
-        } else {
-            eprintln!("[perform_deep_analysis_for_paper] No LaTeX download path configured");
-            None
-        };
-
         match analysis_mode {
             "full" => {
-                // Full mode analysis
-                Self::perform_full_analysis_impl(pool, client, paper, entry, topics, latex_result, language).await?;
+                // Full mode analysis - HTML first, LaTeX fallback
+                Self::perform_full_analysis_impl(pool, client, paper, entry, topics, latex_download_path, language).await?;
             }
             "standard" | _ => {
-                // Standard mode analysis
-                Self::perform_standard_analysis_impl(pool, client, paper, entry, topics, latex_result, language).await?;
+                // Standard mode analysis - HTML first, LaTeX fallback
+                Self::perform_standard_analysis_impl(pool, client, paper, entry, topics, latex_download_path, language).await?;
             }
         }
 
@@ -1087,107 +1209,186 @@ impl FetchManager {
     }
 
     /// Perform Full mode analysis (shared implementation for both sync and async)
+    /// HTML-first: tries HTML download first, only falls back to LaTeX if HTML fails
     async fn perform_full_analysis_impl(
         pool: &SqlitePool,
         client: &LlmClient,
         paper: &mut Paper,
         entry: &ArxivEntry,
         topics: &[TopicConfig],
-        latex_result: Option<Result<String, FetchError>>,
+        latex_download_path: Option<&str>,
         language: &str,
     ) -> Result<(), FetchError> {
-        let latex_content = match latex_result {
-            Some(Ok(latex_path)) => {
-                // LaTeX downloaded successfully
-                match std::fs::read_to_string(&latex_path) {
-                    Ok(content) => {
-                        eprintln!("[perform_full_analysis_impl] LaTeX downloaded ({} bytes)", content.len());
-                        Some(content)
-                    }
-                    Err(e) => {
-                        eprintln!("[perform_full_analysis_impl] Failed to read LaTeX file: {}", e);
-                        None
-                    }
-                }
-            }
-            Some(Err(e)) => {
-                eprintln!("[perform_full_analysis_impl] Failed to download LaTeX: {}", e);
-                None
-            }
-            None => None
-        };
+        // First, try HTML-first fetching (no LaTeX download yet!)
+        let html_content_result = fetch_paper_content(entry, ContentMode::Full).await;
 
-        // Full mode requires LaTeX - mark as incomplete if not available
-        let latex_content = match latex_content {
-            Some(latex) => latex,
-            None => {
-                eprintln!("[perform_full_analysis_impl] No LaTeX available, marking as incomplete");
-                paper.analysis_incomplete = true;
-                return Ok(());
+        let content_source;
+        let estimated_tokens;
+        let available_sections;
+        let content_str;
+
+        match html_content_result {
+            Ok(fetched) => {
+                eprintln!("[perform_full_analysis_impl] Using HTML content ({} bytes, ~{} tokens)",
+                    fetched.content.len(), fetched.estimated_tokens);
+                content_source = Some(fetched.source);
+                estimated_tokens = Some(fetched.estimated_tokens as i32);
+                available_sections = Some(fetched.available_sections);
+                content_str = fetched.content;
+            }
+            Err(_) => {
+                // HTML failed, now try LaTeX as fallback
+                eprintln!("[perform_full_analysis_impl] HTML not available, falling back to LaTeX");
+
+                // Download LaTeX only if HTML failed
+                let latex_content = if let Some(download_path) = latex_download_path {
+                    use std::path::Path;
+                    let path = Path::new(download_path);
+                    eprintln!("[perform_full_analysis_impl] Downloading LaTeX to: {}", download_path);
+
+                    match entry.download_latex_source(path).await {
+                        Ok(latex_path) => {
+                            match std::fs::read_to_string(&latex_path) {
+                                Ok(content) => {
+                                    eprintln!("[perform_full_analysis_impl] LaTeX downloaded ({} bytes)", content.len());
+                                    Some(content)
+                                }
+                                Err(e) => {
+                                    eprintln!("[perform_full_analysis_impl] Failed to read LaTeX file: {}", e);
+                                    None
+                                }
+                            }
+                        }
+                        Err(e) => {
+                            eprintln!("[perform_full_analysis_impl] Failed to download LaTeX: {}", e);
+                            None
+                        }
+                    }
+                } else {
+                    eprintln!("[perform_full_analysis_impl] No LaTeX download path configured");
+                    None
+                };
+
+                // Full mode requires content - mark as incomplete if not available
+                let latex_content = match latex_content {
+                    Some(latex) => latex,
+                    None => {
+                        eprintln!("[perform_full_analysis_impl] No content available (HTML failed, LaTeX unavailable), marking as incomplete");
+                        paper.analysis_incomplete = true;
+                        return Ok(());
+                    }
+                };
+
+                content_source = Some("latex".to_string());
+                estimated_tokens = None;
+                available_sections = None;
+                content_str = latex_content;
             }
         };
 
         // Use the new modular system
+        let content = if content_str.is_empty() { None } else { Some(content_str.as_str()) };
+        let is_fallback = content.is_none() || content_source == Some("latex".to_string());
+
         perform_modular_analysis(
             pool,
             client,
             paper,
             entry,
             topics,
-            Some(latex_content.as_str()),
+            content,
             language,
             AnalysisDepth::Full,
         ).await?;
 
         paper.analysis_mode = Some("full".to_string());
         paper.is_deep_analyzed = true;
+        paper.analysis_incomplete = is_fallback;
+        paper.content_source = content_source;
+        paper.estimated_tokens = estimated_tokens;
+        paper.available_sections = available_sections;
 
         eprintln!("[perform_full_analysis_impl] Full analysis complete for {}", paper.id);
         Ok(())
     }
 
     /// Perform standard mode analysis (shared implementation)
+    /// HTML-first: tries HTML download first, only falls back to LaTeX if HTML fails
     async fn perform_standard_analysis_impl(
         pool: &SqlitePool,
         client: &LlmClient,
         paper: &mut Paper,
         entry: &ArxivEntry,
         topics: &[TopicConfig],
-        latex_result: Option<Result<String, FetchError>>,
+        latex_download_path: Option<&str>,
         language: &str,
     ) -> Result<(), FetchError> {
-        use crate::latex_parser::extract_intro_conclusion;
+        // First, try HTML-first fetching (no LaTeX download yet!)
+        let html_content_result = fetch_paper_content(entry, ContentMode::Standard).await;
 
-        let latex_content = match latex_result {
-            Some(Ok(latex_path)) => {
-                // LaTeX downloaded successfully
-                match std::fs::read_to_string(&latex_path) {
-                    Ok(content) => {
-                        eprintln!("[perform_standard_analysis_impl] LaTeX downloaded ({} bytes), extracting intro+conclusion", content.len());
-                        Some(extract_intro_conclusion(&content))
+        let content_source;
+        let estimated_tokens;
+        let available_sections;
+        let content_str;
+
+        match html_content_result {
+            Ok(fetched) => {
+                eprintln!("[perform_standard_analysis_impl] Using HTML content ({} bytes, ~{} tokens)",
+                    fetched.content.len(), fetched.estimated_tokens);
+                content_source = Some(fetched.source);
+                estimated_tokens = Some(fetched.estimated_tokens as i32);
+                available_sections = Some(fetched.available_sections);
+                content_str = fetched.content;
+            }
+            Err(_) => {
+                // HTML failed, now try LaTeX as fallback
+                eprintln!("[perform_standard_analysis_impl] HTML not available, falling back to LaTeX");
+
+                // Download LaTeX only if HTML failed
+                let latex_content = if let Some(download_path) = latex_download_path {
+                    use std::path::Path;
+                    let path = Path::new(download_path);
+                    eprintln!("[perform_standard_analysis_impl] Downloading LaTeX to: {}", download_path);
+
+                    match entry.download_latex_source(path).await {
+                        Ok(latex_path) => {
+                            match std::fs::read_to_string(&latex_path) {
+                                Ok(content) => {
+                                    eprintln!("[perform_standard_analysis_impl] LaTeX downloaded ({} bytes), extracting intro+conclusion", content.len());
+                                    Some(extract_intro_conclusion(&content))
+                                }
+                                Err(e) => {
+                                    eprintln!("[perform_standard_analysis_impl] Failed to read LaTeX file: {}, falling back to abstract", e);
+                                    None
+                                }
+                            }
+                        }
+                        Err(e) => {
+                            eprintln!("[perform_standard_analysis_impl] Failed to download LaTeX: {}, falling back to abstract", e);
+                            None
+                        }
                     }
-                    Err(e) => {
-                        eprintln!("[perform_standard_analysis_impl] Failed to read LaTeX file: {}, falling back to abstract", e);
-                        None
-                    }
+                } else {
+                    eprintln!("[perform_standard_analysis_impl] No LaTeX download path configured");
+                    None
+                };
+
+                // If LaTeX extraction failed, use abstract
+                if latex_content.is_none() {
+                    eprintln!("[perform_standard_analysis_impl] Using abstract as fallback content");
                 }
+
+                content_source = latex_content.as_ref().map(|_| "latex".to_string()).or_else(|| Some("abstract".to_string()));
+                estimated_tokens = None;
+                available_sections = None;
+                content_str = latex_content.unwrap_or_default();
             }
-            Some(Err(e)) => {
-                eprintln!("[perform_standard_analysis_impl] Failed to download LaTeX: {}, falling back to abstract", e);
-                None
-            }
-            None => None
         };
 
-        // If LaTeX extraction failed, use abstract
-        let content = latex_content.as_deref();
-        let is_fallback = latex_content.is_none();
-
-        if is_fallback {
-            eprintln!("[perform_standard_analysis_impl] Using abstract as fallback content");
-        }
-
         // Use the new modular system
+        let content = if content_str.is_empty() { None } else { Some(content_str.as_str()) };
+        let is_fallback = content.is_none() || content_source == Some("latex".to_string());
+
         perform_modular_analysis(
             pool,
             client,
@@ -1202,6 +1403,9 @@ impl FetchManager {
         paper.analysis_mode = Some("standard".to_string());
         paper.is_deep_analyzed = true;
         paper.analysis_incomplete = is_fallback;
+        paper.content_source = content_source;
+        paper.estimated_tokens = estimated_tokens;
+        paper.available_sections = available_sections;
 
         Ok(())
     }
@@ -1725,6 +1929,14 @@ impl FetchManager {
 
         if was_inserted {
             result.papers_saved += 1;
+
+            // Delete LLM response cache after successful save (if analysis was performed)
+            if let Some(analysis_mode) = &paper.analysis_mode {
+                if let Ok(cache) = LlmCache::new() {
+                    let _ = cache.delete(&paper.id, analysis_mode);
+                }
+            }
+
             // Add paper summary to track saved papers
             result.saved_papers.push(PaperSummary {
                 id: paper.id.clone(),
@@ -1836,38 +2048,63 @@ impl FetchManager {
         latex_result: Option<Result<String, FetchError>>,
         language: &str,
     ) -> Result<(), FetchError> {
-        use crate::latex_parser::extract_intro_conclusion;
+        // First, try HTML-first fetching
+        let html_content_result = fetch_paper_content(entry, ContentMode::Standard).await;
 
-        let latex_content = match latex_result {
-            Some(Ok(latex_path)) => {
-                // LaTeX downloaded successfully
-                match std::fs::read_to_string(&latex_path) {
-                    Ok(content) => {
-                        eprintln!("[perform_standard_analysis] LaTeX downloaded ({} bytes), extracting intro+conclusion", content.len());
-                        Some(extract_intro_conclusion(&content))
+        let content_source;
+        let estimated_tokens;
+        let available_sections;
+        let content_str;
+
+        match html_content_result {
+            Ok(fetched) => {
+                eprintln!("[perform_standard_analysis] Using HTML content ({} bytes, ~{} tokens)",
+                    fetched.content.len(), fetched.estimated_tokens);
+                content_source = Some(fetched.source);
+                estimated_tokens = Some(fetched.estimated_tokens as i32);
+                available_sections = Some(fetched.available_sections);
+                content_str = fetched.content;
+            }
+            Err(_) => {
+                // Fallback to LaTeX
+                eprintln!("[perform_standard_analysis] HTML not available, falling back to LaTeX");
+
+                let latex_content = match latex_result {
+                    Some(Ok(latex_path)) => {
+                        match std::fs::read_to_string(&latex_path) {
+                            Ok(content) => {
+                                eprintln!("[perform_standard_analysis] LaTeX downloaded ({} bytes), extracting intro+conclusion", content.len());
+                                Some(extract_intro_conclusion(&content))
+                            }
+                            Err(e) => {
+                                eprintln!("[perform_standard_analysis] Failed to read LaTeX file: {}, falling back to abstract", e);
+                                None
+                            }
+                        }
                     }
-                    Err(e) => {
-                        eprintln!("[perform_standard_analysis] Failed to read LaTeX file: {}, falling back to abstract", e);
+                    Some(Err(e)) => {
+                        eprintln!("[perform_standard_analysis] Failed to download LaTeX: {}, falling back to abstract", e);
                         None
                     }
+                    None => None
+                };
+
+                // If LaTeX extraction failed, use abstract
+                if latex_content.is_none() {
+                    eprintln!("[perform_standard_analysis] Using abstract as fallback content");
                 }
+
+                content_source = Some("latex".to_string());
+                estimated_tokens = None;
+                available_sections = None;
+                content_str = latex_content.unwrap_or_default();
             }
-            Some(Err(e)) => {
-                eprintln!("[perform_standard_analysis] Failed to download LaTeX: {}, falling back to abstract", e);
-                None
-            }
-            None => None
         };
 
-        // If LaTeX extraction failed, use abstract
-        let content = latex_content.as_deref();
-        let is_fallback = latex_content.is_none();
-
-        if is_fallback {
-            eprintln!("[perform_standard_analysis] Using abstract as fallback content");
-        }
-
         // Use the new modular system
+        let content = if content_str.is_empty() { None } else { Some(content_str.as_str()) };
+        let is_fallback = content.is_none() || content_source == Some("latex".to_string());
+
         perform_modular_analysis(
             pool,
             client,
@@ -1882,6 +2119,9 @@ impl FetchManager {
         paper.analysis_mode = Some("standard".to_string());
         paper.is_deep_analyzed = true;
         paper.analysis_incomplete = is_fallback;
+        paper.content_source = content_source;
+        paper.estimated_tokens = estimated_tokens;
+        paper.available_sections = available_sections;
 
         eprintln!("[perform_standard_analysis] Standard analysis complete for {}", paper.id);
         eprintln!("  - topics: {:?}", paper.topics);
@@ -1900,54 +2140,90 @@ impl FetchManager {
         latex_result: Option<Result<String, FetchError>>,
         language: &str,
     ) -> Result<(), FetchError> {
-        let latex_content = match latex_result {
-            Some(Ok(latex_path)) => {
-                // LaTeX downloaded successfully
-                match std::fs::read_to_string(&latex_path) {
-                    Ok(content) => {
-                        eprintln!("[perform_full_analysis] LaTeX downloaded ({} bytes)", content.len());
-                        Some(content)
+        // First, try HTML-first fetching
+        let html_content_result = fetch_paper_content(entry, ContentMode::Full).await;
+
+        let content_source;
+        let estimated_tokens;
+        let available_sections;
+        let content_str;
+
+        match html_content_result {
+            Ok(fetched) => {
+                eprintln!("[perform_full_analysis] Using HTML content ({} bytes, ~{} tokens)",
+                    fetched.content.len(), fetched.estimated_tokens);
+                content_source = Some(fetched.source);
+                estimated_tokens = Some(fetched.estimated_tokens as i32);
+                available_sections = Some(fetched.available_sections);
+                content_str = fetched.content;
+            }
+            Err(_) => {
+                // Fallback to LaTeX
+                eprintln!("[perform_full_analysis] HTML not available, falling back to LaTeX");
+
+                let latex_content = match latex_result {
+                    Some(Ok(latex_path)) => {
+                        match std::fs::read_to_string(&latex_path) {
+                            Ok(content) => {
+                                eprintln!("[perform_full_analysis] LaTeX downloaded ({} bytes)", content.len());
+                                Some(content)
+                            }
+                            Err(e) => {
+                                eprintln!("[perform_full_analysis] Failed to read LaTeX file: {}", e);
+                                None
+                            }
+                        }
                     }
-                    Err(e) => {
-                        eprintln!("[perform_full_analysis] Failed to read LaTeX file: {}", e);
+                    Some(Err(e)) => {
+                        eprintln!("[perform_full_analysis] Failed to download LaTeX: {}", e);
                         None
                     }
-                }
-            }
-            Some(Err(e)) => {
-                eprintln!("[perform_full_analysis] Failed to download LaTeX: {}", e);
-                None
-            }
-            None => None
-        };
+                    None => None
+                };
 
-        // Full mode requires LaTeX - mark as incomplete if not available
-        let latex_content = match latex_content {
-            Some(latex) => latex,
-            None => {
-                eprintln!("[perform_full_analysis] No LaTeX available, marking as incomplete");
-                paper.analysis_incomplete = true;
-                return Ok(());
+                // Full mode requires LaTeX - mark as incomplete if not available
+                let latex_content = match latex_content {
+                    Some(latex) => latex,
+                    None => {
+                        eprintln!("[perform_full_analysis] No LaTeX available, marking as incomplete");
+                        paper.analysis_incomplete = true;
+                        return Ok(());
+                    }
+                };
+
+                content_source = Some("latex".to_string());
+                estimated_tokens = None;
+                available_sections = None;
+                content_str = latex_content;
             }
         };
 
         // Use the new modular system
+        let content = if content_str.is_empty() { None } else { Some(content_str.as_str()) };
+        let is_fallback = content.is_none() || content_source == Some("latex".to_string());
+
         perform_modular_analysis(
             pool,
             client,
             paper,
             entry,
             topics,
-            Some(latex_content.as_str()),
+            content,
             language,
             AnalysisDepth::Full,
         ).await?;
 
         paper.analysis_mode = Some("full".to_string());
         paper.is_deep_analyzed = true;
+        paper.analysis_incomplete = is_fallback;
+        paper.content_source = content_source;
+        paper.estimated_tokens = estimated_tokens;
+        paper.available_sections = available_sections;
 
         eprintln!("[perform_full_analysis] Full analysis complete for {}", paper.id);
         eprintln!("[perform_full_analysis] Paper state before save:");
+        eprintln!("  - content_source: {:?}", paper.content_source);
+        eprintln!("  - estimated_tokens: {:?}", paper.estimated_tokens);
         eprintln!("  - topics: {:?}", paper.topics);
         eprintln!("  - tags: {:?}", paper.tags);
         eprintln!("  - ai_summary: {} chars", paper.ai_summary.as_ref().map_or(0, |s| s.len()));

@@ -221,7 +221,8 @@
       "moreAuthors": "+{{count}} more",
       "analysisDeep": "Deep",
       "analysisQuick": "Quick",
-      "code": "Code"
+      "code": "Code",
+      "contentSource": "Source"
     },
     "relatedPapers": {
       "title": "Related Papers",

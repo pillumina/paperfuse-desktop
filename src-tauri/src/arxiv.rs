@@ -350,6 +350,47 @@ impl ArxivEntry {
         self.id.clone()
     }
 
+    /// Get the HTML URL for this paper
+    /// Format: https://arxiv.org/html/{arxiv_id}
+    pub fn get_html_url(&self) -> String {
+        let id = self.get_arxiv_id();
+        format!("https://arxiv.org/html/{}", id)
+    }
+
+    /// Download HTML content from arxiv.org
+    /// Returns 404 error for papers without HTML (very old papers)
+    pub async fn download_html(&self) -> Result<String, ArxivError> {
+        use std::time::Duration;
+
+        let url = self.get_html_url();
+        eprintln!("[download_html] Fetching from: {}", url);
+
+        let client = reqwest::Client::builder()
+            .user_agent("PaperFuse/0.1")
+            .timeout(Duration::from_secs(30))
+            .build()?;
+
+        let response = client.get(&url).send().await?;
+
+        if response.status() == 404 {
+            return Err(ArxivError::ParseError(
+                "HTML not available for this paper (may be too old)".to_string(),
+            ));
+        }
+
+        if !response.status().is_success() {
+            return Err(ArxivError::ParseError(format!(
+                "HTTP {} when fetching HTML",
+                response.status()
+            )));
+        }
+
+        let html = response.text().await?;
+        eprintln!("[download_html] Downloaded {} bytes", html.len());
+
+        Ok(html)
+    }
+
     pub fn get_authors(&self) -> Vec<String> {
         self.authors.iter().map(|a| a.name.clone()).collect()
     }

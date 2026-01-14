@@ -221,7 +221,8 @@
       "moreAuthors": "+{{count}} 更多",
       "analysisDeep": "深度",
       "analysisQuick": "快速",
-      "code": "代码"
+      "code": "代码",
+      "contentSource": "来源"
     },
     "relatedPapers": {
       "title": "相关论文",

@@ -41,4 +41,5 @@ regex = "1"
 rand = "0.8"
 open = "5"
 lazy_static = "1.5"
+select = "0.6"
 

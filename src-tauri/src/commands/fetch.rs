@@ -155,11 +155,18 @@ pub async fn cancel_fetch(
     pool: State<'_, SqlitePool>,
     manager_state: State<'_, FetchManagerState>,
 ) -> Result<(), String> {
+    eprintln!("[cancel_fetch] Command called");
     let manager = manager_state.get_or_init(pool.inner()).await;
-    manager
-        .cancel_fetch()
-        .await
-        .map_err(|e| e.to_string())
+    match manager.cancel_fetch().await {
+        Ok(_) => {
+            eprintln!("[cancel_fetch] Successfully cancelled fetch");
+            Ok(())
+        }
+        Err(e) => {
+            eprintln!("[cancel_fetch] Failed to cancel fetch: {}", e);
+            Err(e.to_string())
+        }
+    }
 }
 
 /// Get fetch history

@@ -7,6 +7,7 @@
 use crate::arxiv::{fetch_papers, FetchOptions};
 use crate::database::PaperRepository;
 use crate::llm::{LlmClient, StandardAnalysisResult, FullAnalysisResult};
+use crate::llm_cache::LlmCache;
 use crate::models::{Paper, LLMProvider};
 use crate::analysis::AnalysisDepth;
 use sqlx::SqlitePool;
@@ -83,7 +84,9 @@ pub async fn analyze_paper(
         })?;
 
     // Create LLM client
-    let provider = settings.llm_provider;
+    let provider = settings.llm_provider.clone();
+    let provider_str = format!("{:?}", provider);
+
     let api_key = match provider {
         LLMProvider::Glm => settings.glm_api_key,
         LLMProvider::Claude => settings.claude_api_key,
@@ -96,7 +99,7 @@ pub async fn analyze_paper(
     let deep_model = settings.glm_deep_model.clone().or(settings.claude_deep_model.clone());
 
     let client = LlmClient::new(
-        provider,
+        provider.clone(),
         api_key,
         quick_model,
         deep_model,
@@ -163,14 +166,47 @@ pub async fn analyze_paper(
 
     eprintln!("[analyze_paper] Generated modular prompt ({} chars)", prompt.chars().count());
 
-    // Send request to LLM
-    let response = client
-        .send_chat_request(&prompt, depth.as_str())
-        .await
-        .map_err(|e| {
-            eprintln!("[analyze_paper] LLM request failed: {}", e);
-            e.to_string()
-        })?;
+    // Initialize cache
+    let cache = LlmCache::new().map_err(|e| {
+        eprintln!("[analyze_paper] Failed to initialize cache: {}", e);
+        format!("Failed to initialize cache: {}", e)
+    })?;
+
+    let model_for_cache = settings.glm_quick_model.clone()
+        .or(settings.claude_quick_model.clone())
+        .or(settings.glm_deep_model.clone())
+        .or(settings.claude_deep_model.clone());
+
+    // Try to load from cache first
+    let response = if let Ok(cached_response) = cache.load(&paper_id, &analysis_mode, &prompt) {
+        eprintln!("[analyze_paper] Using cached LLM response");
+        cached_response
+    } else {
+        eprintln!("[analyze_paper] No cache hit, calling LLM API...");
+
+        // Send request to LLM
+        let llm_response = client
+            .send_chat_request(&prompt, depth.as_str())
+            .await
+            .map_err(|e| {
+                eprintln!("[analyze_paper] LLM request failed: {}", e);
+                e.to_string()
+            })?;
+
+        // Save response to cache immediately (before parsing)
+        if let Err(e) = cache.save(
+            &paper_id,
+            &analysis_mode,
+            &llm_response,
+            &prompt,
+            &provider_str,
+            model_for_cache.as_deref(),
+        ) {
+            eprintln!("[analyze_paper] Warning: Failed to save to cache: {}", e);
+        }
+
+        llm_response
+    };
 
     eprintln!("[analyze_paper] Raw response from LLM ({} chars): {}", response.len(), &response.chars().take(500).collect::<String>());
 
@@ -242,6 +278,9 @@ pub async fn analyze_paper(
             eprintln!("[analyze_paper] Failed to save paper: {}", e);
             e.to_string()
         })?;
+
+    // Delete cache after successful save
+    let _ = cache.delete(&paper_id, &analysis_mode);
 
     eprintln!("[analyze_paper] Analysis completed successfully for: {}", paper_id);
     Ok(paper)

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Clock, Loader2, X, ChevronDown, ChevronUp, CheckCircle, AlertCircle, RotateCcw } from 'lucide-react';
+import { Clock, Loader2, X, ChevronDown, ChevronUp, CheckCircle, AlertCircle, RotateCcw, Square } from 'lucide-react';
 import { useFetchProgress } from '../../contexts/FetchProgressContext';
 import { invoke } from '@tauri-apps/api/core';
 
@@ -34,10 +34,12 @@ export function FloatingProgressCard() {
   };
 
   const handleCancel = async () => {
+    console.log('[FloatingProgressCard] Cancel button clicked');
     try {
       await invoke('cancel_fetch');
+      console.log('[FloatingProgressCard] cancel_fetch command succeeded');
     } catch (err) {
-      console.error('Failed to cancel fetch:', err);
+      console.error('[FloatingProgressCard] Failed to cancel fetch:', err);
     }
   };
 
@@ -94,15 +96,16 @@ export function FloatingProgressCard() {
               </div>
             </div>
 
-            {/* Right: Close/Expand buttons */}
-            <div className="flex items-center gap-1">
+            {/* Right: Cancel/Expand buttons */}
+            <div className="flex items-center gap-2">
               {!isCompleted && !hasError && (
                 <button
                   onClick={handleCancel}
-                  className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                  className="px-2.5 py-1.5 text-xs font-medium bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors flex items-center gap-1.5 shadow-sm"
                   title="Cancel"
                 >
-                  <X className="w-4 h-4" />
+                  <Square className="w-3 h-3" />
+                  <span>Cancel</span>
                 </button>
               )}
               {(isCompleted || hasError) && (

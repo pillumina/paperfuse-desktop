@@ -47,6 +47,11 @@ pub struct Paper {
     pub analysis_incomplete: bool,          // LaTeX download failed
     pub pdf_local_path: Option<String>,     // Local path to downloaded PDF
     pub related_papers: Option<Vec<RelatedPaper>>,  // Related works identified during analysis
+
+    // HTML parsing fields
+    pub content_source: Option<String>,     // 'html', 'latex', 'abstract'
+    pub estimated_tokens: Option<i32>,      // Estimated token count of analyzed content
+    pub available_sections: Option<Vec<String>>,  // Sections available in the source
 }
 
 /// Related paper reference
@@ -151,6 +156,10 @@ impl Paper {
             analysis_incomplete: false,
             pdf_local_path: None,
             related_papers: None,
+            // HTML parsing defaults
+            content_source: None,
+            estimated_tokens: None,
+            available_sections: None,
         }
     }
 
@@ -227,6 +236,9 @@ mod tests {
             analysis_incomplete: false,
             pdf_local_path: None,
             related_papers: None,
+            content_source: None,
+            estimated_tokens: None,
+            available_sections: None,
         };
 
         paper.touch();

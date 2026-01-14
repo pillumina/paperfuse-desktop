@@ -7,10 +7,12 @@ mod database;
 mod commands;
 mod arxiv;
 mod llm;
+mod llm_cache;
 mod retry;
 mod fetch;
 mod scheduler;
 mod latex_parser;
+mod html_parser;
 mod analysis;
 
 // Re-export specific types instead of glob to avoid ambiguity

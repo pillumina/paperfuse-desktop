@@ -72,6 +72,10 @@ impl PaperRepository {
             .map(|v| serde_json::to_string(v))
             .transpose()
             .map_err(|e| PaperError::Serialization(e.to_string()))?;
+        let available_sections_json = paper.available_sections.as_ref()
+            .map(|v| serde_json::to_string(v))
+            .transpose()
+            .map_err(|e| PaperError::Serialization(e.to_string()))?;
 
         let result = sqlx::query(
             r#"
@@ -86,8 +90,9 @@ impl PaperRepository {
                 effectiveness_score, effectiveness_reason,
                 experiment_completeness_score, experiment_completeness_reason,
                 algorithm_flowchart, time_complexity, space_complexity,
-                analysis_mode, analysis_incomplete, pdf_local_path, related_papers
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                analysis_mode, analysis_incomplete, is_spam, pdf_local_path, related_papers,
+                content_source, estimated_tokens, available_sections
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(id) DO NOTHING
             "#
         )
@@ -124,8 +129,12 @@ impl PaperRepository {
         .bind(&paper.space_complexity)
         .bind(&paper.analysis_mode)
         .bind(paper.analysis_incomplete)
+        .bind(false)  // is_spam defaults to false for new papers
         .bind(&paper.pdf_local_path)
         .bind(&related_papers_json)
+        .bind(&paper.content_source)
+        .bind(paper.estimated_tokens)
+        .bind(&available_sections_json)
         .execute(&self.pool)
         .await?;
 
@@ -163,6 +172,10 @@ impl PaperRepository {
             .map(|v| serde_json::to_string(v))
             .transpose()
             .map_err(|e| PaperError::Serialization(e.to_string()))?;
+        let available_sections_json = paper.available_sections.as_ref()
+            .map(|v| serde_json::to_string(v))
+            .transpose()
+            .map_err(|e| PaperError::Serialization(e.to_string()))?;
 
         eprintln!("[PaperRepository::save] Serialized data: authors_len={}, tags_len={}, topics_json={}, insights={:?}, links={:?}, related_papers={:?}",
             authors_json.len(), tags_json.len(), topics_json, insights_json.is_some(), links_json.is_some(), related_papers_json.is_some());
@@ -180,8 +193,9 @@ impl PaperRepository {
                 effectiveness_score, effectiveness_reason,
                 experiment_completeness_score, experiment_completeness_reason,
                 algorithm_flowchart, time_complexity, space_complexity,
-                analysis_mode, analysis_incomplete, pdf_local_path, related_papers
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                analysis_mode, analysis_incomplete, is_spam, pdf_local_path, related_papers,
+                content_source, estimated_tokens, available_sections
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(id) DO UPDATE SET
                 arxiv_id = excluded.arxiv_id,
                 title = excluded.title,
@@ -210,8 +224,12 @@ impl PaperRepository {
                 space_complexity = excluded.space_complexity,
                 analysis_mode = excluded.analysis_mode,
                 analysis_incomplete = excluded.analysis_incomplete,
+                is_spam = excluded.is_spam,
                 pdf_local_path = excluded.pdf_local_path,
-                related_papers = excluded.related_papers
+                related_papers = excluded.related_papers,
+                content_source = excluded.content_source,
+                estimated_tokens = excluded.estimated_tokens,
+                available_sections = excluded.available_sections
             "#
         )
         .bind(&paper.id)
@@ -247,8 +265,12 @@ impl PaperRepository {
         .bind(&paper.space_complexity)
         .bind(&paper.analysis_mode)
         .bind(paper.analysis_incomplete)
+        .bind(false)  // is_spam defaults to false for new papers
         .bind(&paper.pdf_local_path)
         .bind(&related_papers_json)
+        .bind(&paper.content_source)
+        .bind(paper.estimated_tokens)
+        .bind(&available_sections_json)
         .execute(&self.pool)
         .await;
 
@@ -526,6 +548,12 @@ impl PaperRepository {
         let related_papers: Option<String> = get_opt_string(&row, "related_papers");
         let related_papers = related_papers.and_then(|v| serde_json::from_str(&v).ok());
 
+        // Parse HTML fields
+        let content_source: Option<String> = get_opt_string(&row, "content_source");
+        let estimated_tokens: Option<i32> = get_opt_copy(&row, "estimated_tokens");
+        let available_sections: Option<String> = get_opt_string(&row, "available_sections");
+        let available_sections = available_sections.and_then(|v| serde_json::from_str(&v).ok());
+
         Ok(Paper {
             id: row.get("id"),
             arxiv_id: row.get("arxiv_id"),
@@ -565,6 +593,9 @@ impl PaperRepository {
             analysis_incomplete,
             pdf_local_path,
             related_papers,
+            content_source,
+            estimated_tokens,
+            available_sections,
         })
     }
 }

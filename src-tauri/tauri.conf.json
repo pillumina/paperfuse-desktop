@@ -31,7 +31,7 @@
   },
   "bundle": {
     "active": true,
-    "targets": ["dmg"],
+    "targets": ["dmg", "msi"],
     "category": "public.app-category.education",
     "copyright": "Copyright (c) 2025 PaperFuse Contributors",
     "icon": [
@@ -48,6 +48,14 @@
       "exceptionDomain": "",
       "providerShortName": null,
       "signingIdentity": "-"
+    },
+    "windows": {
+      "certificateThumbprint": null,
+      "digestAlgorithm": "sha256",
+      "timestampUrl": "",
+      "wix": {
+        "skipWebview": false
+      }
     }
   }
 }

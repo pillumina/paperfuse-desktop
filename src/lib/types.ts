@@ -5,6 +5,11 @@
 export type PaperTag = string;
 export type AnalysisDepth = 'none' | 'basic' | 'standard' | 'full';
 
+export interface PlatformInfo {
+  os: string;
+  supports_scheduler: boolean;
+}
+
 // Analysis block types for modular configuration
 export type BlockDepth = 'standard' | 'full';
 export type BlockRunMode = 'standard' | 'full' | 'both';

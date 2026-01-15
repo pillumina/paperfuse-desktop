@@ -1,0 +1,90 @@
+name: Build Windows MSI
+
+on:
+  release:
+    types: [created]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          clean: true
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Clean any cached builds
+        run: |
+          Remove-Item -Recurse -Force node_modules -ErrorAction SilentlyContinue
+          Remove-Item -Recurse -Force dist -ErrorAction SilentlyContinue
+          Remove-Item -Recurse -Force src-tauri/target -ErrorAction SilentlyContinue
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Build Tauri app
+        run: |
+          npm run tauri build
+        env:
+          TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
+          TAURI_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
+
+      - name: Upload MSI
+        uses: actions/upload-artifact@v4
+        with:
+          name: paperfuse-windows-x64
+          path: src-tauri/target/x86_64-pc-windows-msvc/release/bundle/msi/*.msi
+          if-no-files-found: warn
+
+  release:
+    needs: build
+    runs-on: windows-latest
+    if: startsWith(github.ref, 'refs/tags/')
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: paperfuse-windows-x64
+          path: release
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release/*.msi
+          draft: false
+          prerelease: false
+          body: |
+            ## 📥 Installation
+
+            Download the `.msi` file and run it to install PaperFuse on Windows.
+
+            ## ⚠️ Known Limitations
+
+            - **Scheduler (auto-fetch) is not supported on Windows** - This feature uses macOS launchd and is currently unavailable on Windows. Please use manual fetch instead.
+
+            ## 🎉 What's New
+
+            See the changelog below for details.
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

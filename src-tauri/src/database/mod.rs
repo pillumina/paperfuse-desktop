@@ -14,24 +14,49 @@ pub use collections::CollectionRepository;
 pub use fetch_history::{FetchHistoryRepository, FetchHistoryEntry, PaperSummary};
 
 /// Get the path to the SQLite database file
-/// Uses the application data directory on macOS:
-/// ~/Library/Application Support/com.paperfuse.app/paperfuse.db
+/// Platform-specific application data directories:
+/// - macOS: ~/Library/Application Support/com.paperfuse.app/paperfuse.db
+/// - Windows: %APPDATA%\com.paperfuse.app\paperfuse.db
+/// - Linux: ~/.local/share/com.paperfuse.app/paperfuse.db
 pub fn get_db_path() -> PathBuf {
-    // Get the home directory
-    if let Some(home) = std::env::var_os("HOME") {
-        let mut path = PathBuf::from(&home);
-        // macOS application support directory
-        path.push("Library");
-        path.push("Application Support");
-        path.push("com.paperfuse.app");
-        path.push("paperfuse.db");
-        path
-    } else {
-        // Fallback to current directory if HOME is not set
-        let mut path = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
-        path.push("paperfuse.db");
-        path
+    #[cfg(target_os = "macos")]
+    {
+        if let Some(home) = std::env::var_os("HOME") {
+            let mut path = PathBuf::from(&home);
+            path.push("Library");
+            path.push("Application Support");
+            path.push("com.paperfuse.app");
+            path.push("paperfuse.db");
+            return path;
+        }
     }
+
+    #[cfg(target_os = "windows")]
+    {
+        if let Some(appdata) = std::env::var_os("APPDATA") {
+            let mut path = PathBuf::from(&appdata);
+            path.push("com.paperfuse.app");
+            path.push("paperfuse.db");
+            return path;
+        }
+    }
+
+    #[cfg(target_os = "linux")]
+    {
+        if let Some(home = std::env::var_os("HOME") {
+            let mut path = PathBuf::from(&home);
+            path.push(".local");
+            path.push("share");
+            path.push("com.paperfuse.app");
+            path.push("paperfuse.db");
+            return path;
+        }
+    }
+
+    // Fallback to current directory if platform-specific path is not available
+    let mut path = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
+    path.push("paperfuse.db");
+    path
 }
 
 /// Initialize the database connection and run migrations

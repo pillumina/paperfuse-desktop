@@ -7,9 +7,10 @@ export interface SettingsPageLayoutProps {
   activeTab: string;
   onTabChange: (tab: 'appearance' | 'api-keys' | 'topics' | 'arxiv-categories' | 'schedule' | 'storage' | 'analysis' | 'retry' | 'fetch-history') => void;
   children: ReactNode;
+  supportsScheduler?: boolean;
 }
 
-export function SettingsPageLayout({ activeTab, onTabChange, children }: SettingsPageLayoutProps) {
+export function SettingsPageLayout({ activeTab, onTabChange, children, supportsScheduler = true }: SettingsPageLayoutProps) {
   const { t } = useLanguage();
 
   const tabs = [
@@ -19,7 +20,7 @@ export function SettingsPageLayout({ activeTab, onTabChange, children }: Setting
     { id: 'arxiv-categories', label: t('settings.tabs.arxivCategories'), icon: Layers },
     { id: 'analysis', label: t('settings.tabs.deepAnalysis'), icon: Sparkles },
     { id: 'retry', label: t('settings.tabs.llmRetry'), icon: RotateCcw },
-    { id: 'schedule', label: t('settings.tabs.schedule'), icon: Clock },
+    ...(supportsScheduler ? [{ id: 'schedule', label: t('settings.tabs.schedule'), icon: Clock }] : []),
     { id: 'storage', label: t('settings.tabs.storage'), icon: HardDrive },
     { id: 'fetch-history', label: t('settings.tabs.fetchHistory'), icon: History },
   ] as const;

@@ -41,6 +41,7 @@ pub use commands::{
     create_collection, get_collections, get_collection, update_collection,
     delete_collection, add_paper_to_collection, remove_paper_from_collection,
     get_collection_papers, get_paper_collections,
+    get_platform_info,
     FetchManagerState, SchedulerState,
 };
 
@@ -90,6 +91,8 @@ pub fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
+            // Platform commands
+            get_platform_info,
             // Paper commands
             get_papers,
             get_paper_by_id,

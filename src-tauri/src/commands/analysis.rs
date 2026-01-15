@@ -95,8 +95,18 @@ pub async fn analyze_paper(
         "No API key configured".to_string()
     })?;
 
-    let quick_model = settings.glm_quick_model.clone().or(settings.claude_quick_model.clone());
-    let deep_model = settings.glm_deep_model.clone().or(settings.claude_deep_model.clone());
+    // Select models based on the configured provider to avoid using
+    // GLM provider with Claude models or vice versa
+    let (quick_model, deep_model) = match provider {
+        LLMProvider::Glm => (
+            settings.glm_quick_model.clone(),
+            settings.glm_deep_model.clone(),
+        ),
+        LLMProvider::Claude => (
+            settings.claude_quick_model.clone(),
+            settings.claude_deep_model.clone(),
+        ),
+    };
 
     let client = LlmClient::new(
         provider.clone(),

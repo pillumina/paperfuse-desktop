@@ -52,10 +52,7 @@
     "windows": {
       "certificateThumbprint": null,
       "digestAlgorithm": "sha256",
-      "timestampUrl": "",
-      "wix": {
-        "skipWebview": false
-      }
+      "timestampUrl": ""
     }
   }
 }

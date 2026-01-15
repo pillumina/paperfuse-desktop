@@ -13,17 +13,28 @@ export interface SettingsPageLayoutProps {
 export function SettingsPageLayout({ activeTab, onTabChange, children, supportsScheduler = true }: SettingsPageLayoutProps) {
   const { t } = useLanguage();
 
-  const tabs = [
+  type TabItem = {
+    id: 'appearance' | 'api-keys' | 'topics' | 'arxiv-categories' | 'analysis' | 'retry' | 'schedule' | 'storage' | 'fetch-history';
+    label: string;
+    icon: React.ComponentType<{ className?: string }>;
+  };
+
+  const baseTabs: TabItem[] = [
     { id: 'appearance', label: t('settings.tabs.appearance'), icon: Palette },
     { id: 'api-keys', label: t('settings.tabs.apiKeys'), icon: Key },
     { id: 'topics', label: t('settings.tabs.topics'), icon: Tags },
     { id: 'arxiv-categories', label: t('settings.tabs.arxivCategories'), icon: Layers },
     { id: 'analysis', label: t('settings.tabs.deepAnalysis'), icon: Sparkles },
     { id: 'retry', label: t('settings.tabs.llmRetry'), icon: RotateCcw },
-    ...(supportsScheduler ? [{ id: 'schedule', label: t('settings.tabs.schedule'), icon: Clock }] : []),
     { id: 'storage', label: t('settings.tabs.storage'), icon: HardDrive },
     { id: 'fetch-history', label: t('settings.tabs.fetchHistory'), icon: History },
-  ] as const;
+  ];
+
+  const scheduleTab: TabItem[] = supportsScheduler
+    ? [{ id: 'schedule', label: t('settings.tabs.schedule'), icon: Clock }]
+    : [];
+
+  const tabs = [...baseTabs.slice(0, 6), ...scheduleTab, ...baseTabs.slice(6)];
 
   return (
     <div className="flex h-full">

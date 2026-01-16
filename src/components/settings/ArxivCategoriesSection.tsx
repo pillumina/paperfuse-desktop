@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Plus, X, Info } from 'lucide-react';
+import { Plus, X, Info, Check } from 'lucide-react';
 import { useSettings } from '../../hooks/useSettings';
 import { useLanguage } from '../../contexts/LanguageContext';
 
@@ -24,6 +24,7 @@ export function ArxivCategoriesSection() {
   );
   const [newCategory, setNewCategory] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
   const handleAddCategory = () => {
     const trimmed = newCategory.trim();
@@ -40,11 +41,14 @@ export function ArxivCategoriesSection() {
   const handleAddCommonCategory = (categoryId: string) => {
     if (!categories.includes(categoryId)) {
       setCategories([...categories, categoryId]);
+    } else {
+      setCategories(categories.filter(c => c !== categoryId));
     }
   };
 
   const handleSave = async () => {
     setIsSaving(true);
+    setSaveSuccess(false);
     try {
       const { invoke } = await import('@tauri-apps/api/core');
       const updatedSettings = {
@@ -52,6 +56,8 @@ export function ArxivCategoriesSection() {
         arxivCategories: categories,
       };
       await invoke('save_settings', { settings: updatedSettings });
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 2000);
     } catch (error) {
       console.error('Failed to save categories:', error);
     } finally {
@@ -140,11 +146,10 @@ export function ArxivCategoriesSection() {
             return (
               <button
                 key={cat.id}
-                onClick={() => !isSelected && handleAddCommonCategory(cat.id)}
-                disabled={isSelected}
-                className={`text-left p-3 rounded-lg border-2 transition-all ${
+                onClick={() => handleAddCommonCategory(cat.id)}
+                className={`text-left p-3 rounded-lg border-2 transition-all cursor-pointer ${
                   isSelected
-                    ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/20 cursor-default'
+                    ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/30'
                     : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 bg-white dark:bg-gray-800'
                 }`}
               >
@@ -192,13 +197,22 @@ export function ArxivCategoriesSection() {
       </div>
 
       {/* Save Button */}
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-2">
         <button
           onClick={handleSave}
           disabled={isSaving || isLoading}
-          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
         >
-          {isSaving ? t('settings.arxivCategories.saving') : t('settings.arxivCategories.saveCategories')}
+          {saveSuccess ? (
+            <>
+              <Check className="w-4 h-4" />
+              {t('settings.arxivCategories.saved')}
+            </>
+          ) : isSaving ? (
+            t('settings.arxivCategories.saving')
+          ) : (
+            t('settings.arxivCategories.saveCategories')
+          )}
         </button>
       </div>
     </div>

@@ -1,5 +1,6 @@
 import { FileText, Search, Inbox, WifiOff, Lightbulb } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 interface EmptyStateProps {
   type?: 'no-papers' | 'no-results' | 'no-collections' | 'no-network';
@@ -8,6 +9,7 @@ interface EmptyStateProps {
 }
 
 export function EmptyState({ type = 'no-papers', searchQuery, onClearFilters }: EmptyStateProps) {
+  const { t } = useLanguage();
   const navigate = useNavigate();
 
   if (type === 'no-results') {
@@ -18,13 +20,13 @@ export function EmptyState({ type = 'no-papers', searchQuery, onClearFilters }: 
         </div>
 
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2 tracking-tight">
-          No papers found
+          {t('papers.empty.noResultsTitle')}
         </h2>
 
         <p className="text-gray-600 dark:text-gray-400 mb-6 text-center max-w-md">
           {searchQuery
-            ? `No papers match "${searchQuery}"`
-            : 'No papers match your current filters'}
+            ? `${t('papers.empty.noResultsQuery')} "${searchQuery}"`
+            : t('papers.empty.noResultsFilters')}
         </p>
 
         {/* Suggestions for finding papers */}
@@ -32,25 +34,25 @@ export function EmptyState({ type = 'no-papers', searchQuery, onClearFilters }: 
           <div className="flex items-start gap-2 mb-3">
             <Lightbulb className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
             <p className="text-sm text-blue-900 dark:text-blue-200 font-semibold">
-              Suggestions
+              {t('papers.empty.suggestions')}
             </p>
           </div>
           <ul className="text-sm text-blue-800 dark:text-blue-300 space-y-2 ml-7">
             <li className="flex items-start gap-2">
               <span className="text-blue-600 dark:text-blue-400 mt-1">•</span>
-              <span>Try different keywords</span>
+              <span>{t('papers.empty.suggestionTryKeywords')}</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-blue-600 dark:text-blue-400 mt-1">•</span>
-              <span>Check for typos</span>
+              <span>{t('papers.empty.suggestionCheckTypos')}</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-blue-600 dark:text-blue-400 mt-1">•</span>
-              <span>Use more general terms</span>
+              <span>{t('papers.empty.suggestionGeneralTerms')}</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-blue-600 dark:text-blue-400 mt-1">•</span>
-              <span>Clear filters to see all papers</span>
+              <span>{t('papers.empty.suggestionClearFilters')}</span>
             </li>
           </ul>
         </div>
@@ -59,7 +61,7 @@ export function EmptyState({ type = 'no-papers', searchQuery, onClearFilters }: 
           onClick={onClearFilters}
           className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 active:shadow-sm font-medium transition-all duration-200 cursor-pointer focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
         >
-          Clear Filters
+          {t('papers.empty.clearFilters')}
         </button>
       </div>
     );
@@ -73,18 +75,18 @@ export function EmptyState({ type = 'no-papers', searchQuery, onClearFilters }: 
         </div>
 
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-          No collections yet
+          {t('collections.empty.noCollections')}
         </h2>
 
         <p className="text-gray-600 dark:text-gray-400 mb-8 text-center max-w-md">
-          Create collections to organize your papers by topic, project, or any way you like
+          {t('collections.empty.description')}
         </p>
 
         <button
           onClick={() => navigate('/settings')}
           className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 active:shadow-sm font-medium transition-all duration-200 cursor-pointer focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
         >
-          Go to Settings
+          {t('collections.empty.goToSettings')}
         </button>
       </div>
     );
@@ -98,18 +100,18 @@ export function EmptyState({ type = 'no-papers', searchQuery, onClearFilters }: 
         </div>
 
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-          Connection error
+          {t('papers.empty.connectionError')}
         </h2>
 
         <p className="text-gray-600 dark:text-gray-400 mb-8 text-center max-w-md">
-          Unable to connect to the server. Please check your internet connection and try again.
+          {t('papers.empty.connectionErrorDescription')}
         </p>
 
         <button
           onClick={() => window.location.reload()}
           className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 active:shadow-sm font-medium transition-all duration-200 cursor-pointer focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
         >
-          Retry
+          {t('papers.empty.retry')}
         </button>
       </div>
     );
@@ -123,11 +125,11 @@ export function EmptyState({ type = 'no-papers', searchQuery, onClearFilters }: 
       </div>
 
       <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2 tracking-tight">
-        No papers yet
+        {t('papers.empty.noPapersYet')}
       </h2>
 
       <p className="text-gray-600 dark:text-gray-400 mb-8 text-center max-w-md">
-        Fetch your first papers from ArXiv to get started. Configure your API keys and research topics in settings.
+        {t('papers.empty.noPapersDescription')}
       </p>
 
       <div className="flex gap-3">
@@ -135,13 +137,13 @@ export function EmptyState({ type = 'no-papers', searchQuery, onClearFilters }: 
           onClick={() => navigate('/settings')}
           className="px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 active:shadow-sm font-medium transition-all duration-200 cursor-pointer focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
         >
-          Configure Settings
+          {t('papers.empty.configureSettings')}
         </button>
         <button
           onClick={() => navigate('/')}
           className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 active:shadow-sm font-medium transition-all duration-200 cursor-pointer focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
         >
-          Fetch Papers
+          {t('papers.empty.fetchPapers')}
         </button>
       </div>
     </div>

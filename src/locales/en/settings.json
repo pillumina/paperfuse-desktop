@@ -127,7 +127,8 @@
       "linkText": "arxiv.org/category_taxonomy"
     },
     "saveCategories": "Save Categories",
-    "saving": "Saving..."
+    "saving": "Saving...",
+    "saved": "Saved!"
   },
   "deepAnalysis": {
     "title": "Deep Analysis Mode",

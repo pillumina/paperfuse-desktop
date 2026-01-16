@@ -31,7 +31,10 @@
   "paperAdded": "已添加 {{count}} 篇论文",
   "empty": {
     "title": "此收藏为空",
-    "description": "添加论文后在此显示"
+    "description": "添加论文后在此显示",
+    "noCollections": "暂无收藏",
+    "noCollectionsDescription": "创建收藏夹来按主题、项目或任何方式整理您的论文",
+    "goToSettings": "前往设置"
   },
   "messages": {
     "created": "收藏已创建",

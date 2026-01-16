@@ -31,7 +31,10 @@
   "paperAdded": "{{count}} paper(s) added",
   "empty": {
     "title": "This collection is empty",
-    "description": "Add papers to see them here"
+    "description": "Add papers to see them here",
+    "noCollections": "No collections yet",
+    "noCollectionsDescription": "Create collections to organize your papers by topic, project, or any way you like.",
+    "goToSettings": "Go to Settings"
   },
   "messages": {
     "created": "Collection created",

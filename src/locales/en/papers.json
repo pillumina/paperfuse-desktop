@@ -136,9 +136,22 @@
   "empty": {
     "noPapers": "No papers found",
     "noPapersDescription": "No papers found matching your filters.",
-    "noPapersYet": "No papers available yet.",
-    "noPapersYetDescription": "Start by fetching some papers from ArXiv!",
-    "fetchPapers": "Fetch Papers"
+    "noPapersYet": "No papers yet",
+    "noPapersYetDescription": "Start by fetching papers from ArXiv and analyzing them with AI.",
+    "fetchPapers": "Fetch Papers",
+    "configureSettings": "Configure Settings",
+    "noResultsTitle": "No papers found",
+    "noResultsQuery": "No papers found matching",
+    "noResultsFilters": "No papers found matching your filters.",
+    "suggestions": "Suggestions for finding papers",
+    "suggestionTryKeywords": "Try different keywords or search terms",
+    "suggestionCheckTypos": "Check for typos in your search query",
+    "suggestionGeneralTerms": "Use more general terms (e.g., \"machine learning\" instead of specific techniques)",
+    "suggestionClearFilters": "Clear filters and browse all papers",
+    "clearFilters": "Clear Filters",
+    "connectionError": "Connection Error",
+    "connectionErrorDescription": "Failed to connect to ArXiv. Please check your internet connection.",
+    "retry": "Retry"
   },
   "detail": {
     "backToPapers": "Back to Papers",

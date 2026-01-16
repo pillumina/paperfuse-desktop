@@ -136,9 +136,22 @@
   "empty": {
     "noPapers": "未找到论文",
     "noPapersDescription": "没有找到匹配筛选条件的论文。",
-    "noPapersYet": "暂无论文。",
-    "noPapersYetDescription": "从 ArXiv 获取一些论文开始吧！",
-    "fetchPapers": "获取论文"
+    "noPapersYet": "暂无论文",
+    "noPapersYetDescription": "从 ArXiv 获取论文并用 AI 分析开始吧。",
+    "fetchPapers": "获取论文",
+    "configureSettings": "配置设置",
+    "noResultsTitle": "未找到论文",
+    "noResultsQuery": "未找到匹配",
+    "noResultsFilters": "没有找到匹配筛选条件的论文。",
+    "suggestions": "查找论文建议",
+    "suggestionTryKeywords": "尝试不同的关键词或搜索词",
+    "suggestionCheckTypos": "检查搜索查询中是否有拼写错误",
+    "suggestionGeneralTerms": "使用更通用的术语（例如，用\"机器学习\"而不是具体的技术）",
+    "suggestionClearFilters": "清除筛选条件并浏览所有论文",
+    "clearFilters": "清除筛选",
+    "connectionError": "连接错误",
+    "connectionErrorDescription": "无法连接到 ArXiv。请检查您的网络连接。",
+    "retry": "重试"
   },
   "detail": {
     "backToPapers": "返回论文列表",

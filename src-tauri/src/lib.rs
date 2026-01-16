@@ -67,11 +67,9 @@ pub fn run() {
             let pool = rt.block_on(async {
                 let pool = database::init_db().await.expect("Failed to initialize database");
 
-                // Create schema if needed (for development)
-                #[cfg(debug_assertions)]
-                {
-                    database::create_schema(&pool).await.expect("Failed to create schema");
-                }
+                // Run database migrations to create/update schema
+                // This is safe to run multiple times as it ignores existing tables/columns
+                database::create_schema(&pool).await.expect("Failed to create schema");
 
                 pool
             });

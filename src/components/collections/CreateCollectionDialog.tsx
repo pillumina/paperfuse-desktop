@@ -32,7 +32,7 @@ export function CreateCollectionDialog({
   // Initialize form with collection values on mount
   const [name, setName] = useState(collection?.name || '');
   const [description, setDescription] = useState(collection?.description || '');
-  const [selectedColor, setSelectedColor] = useState<string | undefined>(collection?.color);
+  const [selectedColor, setSelectedColor] = useState<string | undefined>(collection?.color || undefined);
 
   if (!isOpen) return null;
 

@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { invoke } from '@tauri-apps/api/core';
 import { useLanguage } from '../contexts/LanguageContext';
 import {
@@ -24,7 +23,6 @@ interface SpamPageProps {
 
 export default function SpamPage({ viewMode }: SpamPageProps) {
   const { t } = useLanguage();
-  const navigate = useNavigate();
   const [papers, setPapers] = useState<Paper[]>([]);
   const [loading, setLoading] = useState(true);
   const [spamCount, setSpamCount] = useState<number>(0);

@@ -15,7 +15,6 @@ export function TopicsSection() {
   // Local state for topics editing
   const [topics, setTopics] = useState<TopicConfig[]>(getTopics());
   const [dialogTopic, setDialogTopic] = useState<TopicConfig | null>(null);
-  const [isAdding, setIsAdding] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [initialized, setInitialized] = useState(false);

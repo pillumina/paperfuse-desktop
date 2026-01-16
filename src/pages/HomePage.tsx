@@ -8,7 +8,6 @@ import { useCollections } from '../hooks/useCollections';
 import { useSettings } from '../hooks/useSettings';
 import { usePaperCount } from '../hooks/usePapers';
 import { useLanguage } from '../contexts/LanguageContext';
-import type { Settings } from '../lib/types';
 import '../styles/animations.css';
 
 export default function HomePage() {

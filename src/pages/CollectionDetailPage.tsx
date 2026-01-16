@@ -45,7 +45,7 @@ export default function CollectionDetailPage() {
     setIsEditDialogOpen(true);
   };
 
-  const handleUpdate = (data: { name: string; description: string; color: string }) => {
+  const handleUpdate = (data: { name: string; description?: string; color: string }) => {
     updateMutation.mutate(
       { id: id!, ...data },
       {

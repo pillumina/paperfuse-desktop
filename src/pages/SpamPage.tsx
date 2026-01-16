@@ -15,6 +15,7 @@ import { VirtualPaperList } from '../components/papers/VirtualPaperList';
 import { Toast } from '../components/common/Toast';
 import { Modal } from '../components/common/Modal';
 import type { Paper } from '../lib/types';
+import '../styles/transitions.css';
 
 interface SpamPageProps {
   viewMode: 'grid' | 'list';
@@ -185,10 +186,34 @@ export default function SpamPage({ viewMode }: SpamPageProps) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[calc(100vh-4rem)]">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-gray-100"></div>
-          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">{t('common.loading')}</p>
+      <div className="max-w-[1920px] mx-auto p-6">
+        {/* Header bg-gray-200 dark:bg-gray-700 animate-pulse */}
+        <div className="mb-6">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse" />
+            <div>
+              <div className="h-7 w-48 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mb-2" />
+              <div className="h-4 w-64 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+            </div>
+          </div>
+        </div>
+
+        {/* Paper grid bg-gray-200 dark:bg-gray-700 animate-pulse */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {[...Array(8)].map((_, i) => (
+            <div
+              key={i}
+              className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 bg-gray-200 dark:bg-gray-700 animate-pulse"
+            >
+              <div className="h-6 w-3/4 bg-gray-200 dark:bg-gray-700 rounded mb-3" />
+              <div className="h-4 w-full bg-gray-200 dark:bg-gray-700 rounded mb-2" />
+              <div className="h-4 w-2/3 bg-gray-200 dark:bg-gray-700 rounded mb-4" />
+              <div className="flex gap-2">
+                <div className="h-6 w-16 bg-gray-200 dark:bg-gray-700 rounded-full" />
+                <div className="h-6 w-16 bg-gray-200 dark:bg-gray-700 rounded-full" />
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     );

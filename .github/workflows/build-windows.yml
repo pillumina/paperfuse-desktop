@@ -46,12 +46,20 @@ jobs:
           TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
           TAURI_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
 
+      - name: List build outputs
+        run: |
+          echo "=== Target directory structure ==="
+          Get-ChildItem -Recurse src-tauri\target | Select-Object -First 50
+          echo ""
+          echo "=== Looking for MSI files ==="
+          Get-ChildItem -Recurse src-tauri\target -Filter *.msi -Recurse -ErrorAction SilentlyContinue
+
       - name: Upload MSI
         uses: actions/upload-artifact@v4
         with:
           name: paperfuse-windows-x64
           path: src-tauri/target/x86_64-pc-windows-msvc/release/bundle/msi/*.msi
-          if-no-files-found: warn
+          if-no-files-found: error
 
   release:
     needs: build

@@ -74,12 +74,20 @@ jobs:
             done
           fi
 
+      - name: List build outputs
+        run: |
+          echo "=== Target directory structure ==="
+          ls -laR src-tauri/target | head -100
+          echo ""
+          echo "=== Looking for DMG files ==="
+          find src-tauri/target -name "*.dmg" || echo "No DMG files found"
+
       - name: Upload DMG (single arch)
         uses: actions/upload-artifact@v4
         with:
           name: paperfuse-${{ matrix.arch }}
           path: src-tauri/target/${{ matrix.target }}/release/bundle/dmg/*.dmg
-          if-no-files-found: warn
+          if-no-files-found: error
 
   create-universal:
     needs: build

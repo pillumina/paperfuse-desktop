@@ -184,41 +184,7 @@ export default function SpamPage({ viewMode }: SpamPageProps) {
     });
   };
 
-  if (loading) {
-    return (
-      <div className="max-w-[1920px] mx-auto p-6">
-        {/* Header bg-gray-200 dark:bg-gray-700 animate-pulse */}
-        <div className="mb-6">
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse" />
-            <div>
-              <div className="h-7 w-48 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mb-2" />
-              <div className="h-4 w-64 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-            </div>
-          </div>
-        </div>
-
-        {/* Paper grid bg-gray-200 dark:bg-gray-700 animate-pulse */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {[...Array(8)].map((_, i) => (
-            <div
-              key={i}
-              className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 bg-gray-200 dark:bg-gray-700 animate-pulse"
-            >
-              <div className="h-6 w-3/4 bg-gray-200 dark:bg-gray-700 rounded mb-3" />
-              <div className="h-4 w-full bg-gray-200 dark:bg-gray-700 rounded mb-2" />
-              <div className="h-4 w-2/3 bg-gray-200 dark:bg-gray-700 rounded mb-4" />
-              <div className="flex gap-2">
-                <div className="h-6 w-16 bg-gray-200 dark:bg-gray-700 rounded-full" />
-                <div className="h-6 w-16 bg-gray-200 dark:bg-gray-700 rounded-full" />
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
+  // Don't return early for loading - let content fade in naturally
   const selectedCount = selectedPaperIds.size;
   const isAllSelected = selectedCount === papers.length && papers.length > 0;
 
@@ -283,7 +249,14 @@ export default function SpamPage({ viewMode }: SpamPageProps) {
       </div>
 
       {/* Papers */}
-      {papers.length === 0 ? (
+      {loading ? (
+        <div className="flex items-center justify-center py-32">
+          <div className="text-center">
+            <div className="inline-block animate-spin rounded-full h-10 w-10 border-3 border-gray-200 border-t-blue-600"></div>
+            <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">{t('common.loading')}</p>
+          </div>
+        </div>
+      ) : papers.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <AlertCircle className="w-16 h-16 text-gray-400 dark:text-gray-600 mb-4" />
           <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">

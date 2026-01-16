@@ -28,6 +28,11 @@
     "title": "API Keys",
     "description": "Configure your LLM provider for paper analysis",
     "provider": "LLM Provider",
+    "providerHelp": "Click a provider card to view or edit its configuration. Your settings are saved automatically.",
+    "active": "Active",
+    "keyConfigured": "Key configured",
+    "keyNotConfigured": "Not configured",
+    "useThisProvider": "Use This Provider",
     "glm": {
       "name": "ZhipuAI GLM",
       "description": "Cost-effective, great for Chinese users",

@@ -17,6 +17,9 @@ export function ApiKeysSection() {
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [initialized, setInitialized] = useState(false);
 
+  // Separate state for which config panel is currently VIEWING (not necessarily the active provider)
+  const [viewingProvider, setViewingProvider] = useState<'glm' | 'claude'>('glm');
+
   // Initialize local settings when saved settings load (only once)
   useEffect(() => {
     if (savedSettings && !initialized) {
@@ -26,6 +29,7 @@ export function ApiKeysSection() {
         hasClaudeKey: !!savedSettings.claudeApiKey,
       });
       setLocalSettings(savedSettings);
+      setViewingProvider(savedSettings.llmProvider);
       setInitialized(true);
     }
   }, [savedSettings, initialized]);
@@ -38,23 +42,24 @@ export function ApiKeysSection() {
     }
   }, [localSettings, savedSettings]);
 
-  // Handle provider change - clear other provider's key (mutually exclusive)
-  const handleProviderChange = async (newProvider: 'glm' | 'claude') => {
-    console.log(`[ApiKeysSection] Switching provider to ${newProvider}, clearing other key`);
+  // Switch which config panel to VIEW (doesn't change the active provider)
+  const handleSwitchView = (provider: 'glm' | 'claude') => {
+    console.log(`[ApiKeysSection] Switching view to ${provider} (not changing active provider yet)`);
+    setViewingProvider(provider);
+  };
+
+  // Actually change the active provider (when user clicks "Use This Provider")
+  const handleSetProvider = async (newProvider: 'glm' | 'claude') => {
+    console.log(`[ApiKeysSection] Setting active provider to ${newProvider}`);
 
     const updatedSettings = {
       ...localSettings,
       llmProvider: newProvider,
-      // Clear the other provider's key
-      ...(newProvider === 'glm'
-        ? { claudeApiKey: undefined, claudeQuickModel: undefined, claudeDeepModel: undefined }
-        : { glmApiKey: undefined, glmQuickModel: undefined, glmDeepModel: undefined }
-      ),
     };
 
     setLocalSettings(updatedSettings);
 
-    // Auto-save when switching provider
+    // Auto-save when changing provider
     try {
       await saveSettingsMutation.mutateAsync(updatedSettings);
       setSaveSuccess(true);
@@ -112,6 +117,7 @@ export function ApiKeysSection() {
     console.log('[ApiKeysSection] Canceling, resetting to saved settings');
     if (savedSettings) {
       setLocalSettings(savedSettings);
+      setViewingProvider(savedSettings.llmProvider);
       setHasChanges(false);
     }
   };
@@ -154,57 +160,103 @@ export function ApiKeysSection() {
         </p>
       </div>
 
-      {/* LLM Provider Selection */}
+      {/* LLM Provider Selection Cards - for VIEWING configs */}
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 mb-6">
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
           {t('settings.apiKeys.provider')}
         </label>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+          {t('settings.apiKeys.providerHelp')}
+        </p>
 
         <div className="grid grid-cols-2 gap-4">
-          <button
-            type="button"
-            onClick={() => handleProviderChange('glm')}
-            disabled={saveSettingsMutation.isPending}
-            className={`p-4 rounded-lg border-2 transition-colors text-left ${
-              localSettings.llmProvider === 'glm'
+          {/* GLM Card */}
+          <div
+            className={`p-4 rounded-lg border-2 transition-colors text-left cursor-pointer ${
+              viewingProvider === 'glm'
                 ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
                 : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
-            } ${saveSettingsMutation.isPending ? 'opacity-50 cursor-not-allowed' : ''}`}
+            }`}
+            onClick={() => handleSwitchView('glm')}
           >
-            <div className="font-semibold text-gray-900 dark:text-white mb-1">
-              {t('settings.apiKeys.glm.name')}
+            <div className="flex items-center justify-between mb-2">
+              <div className="font-semibold text-gray-900 dark:text-white">
+                {t('settings.apiKeys.glm.name')}
+              </div>
+              {/* Active indicator */}
+              {localSettings.llmProvider === 'glm' && (
+                <span className="text-xs font-medium px-2 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-full">
+                  {t('settings.apiKeys.active')}
+                </span>
+              )}
             </div>
-            <div className="text-sm text-gray-600 dark:text-gray-400">
+            <div className="text-sm text-gray-600 dark:text-gray-400 mb-3">
               {t('settings.apiKeys.glm.description')}
             </div>
-          </button>
+            {/* Key status */}
+            <div className="text-xs text-gray-500 dark:text-gray-500">
+              {localSettings.glmApiKey ? (
+                <span className="text-green-600 dark:text-green-400">✓ {t('settings.apiKeys.keyConfigured')}</span>
+              ) : (
+                <span>{t('settings.apiKeys.keyNotConfigured')}</span>
+              )}
+            </div>
+          </div>
 
-          <button
-            type="button"
-            onClick={() => handleProviderChange('claude')}
-            disabled={saveSettingsMutation.isPending}
-            className={`p-4 rounded-lg border-2 transition-colors text-left ${
-              localSettings.llmProvider === 'claude'
+          {/* Claude Card */}
+          <div
+            className={`p-4 rounded-lg border-2 transition-colors text-left cursor-pointer ${
+              viewingProvider === 'claude'
                 ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
                 : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
-            } ${saveSettingsMutation.isPending ? 'opacity-50 cursor-not-allowed' : ''}`}
+            }`}
+            onClick={() => handleSwitchView('claude')}
           >
-            <div className="font-semibold text-gray-900 dark:text-white mb-1">
-              {t('settings.apiKeys.claude.name')}
+            <div className="flex items-center justify-between mb-2">
+              <div className="font-semibold text-gray-900 dark:text-white">
+                {t('settings.apiKeys.claude.name')}
+              </div>
+              {/* Active indicator */}
+              {localSettings.llmProvider === 'claude' && (
+                <span className="text-xs font-medium px-2 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-full">
+                  {t('settings.apiKeys.active')}
+                </span>
+              )}
             </div>
-            <div className="text-sm text-gray-600 dark:text-gray-400">
+            <div className="text-sm text-gray-600 dark:text-gray-400 mb-3">
               {t('settings.apiKeys.claude.description')}
             </div>
-          </button>
+            {/* Key status */}
+            <div className="text-xs text-gray-500 dark:text-gray-500">
+              {localSettings.claudeApiKey ? (
+                <span className="text-green-600 dark:text-green-400">✓ {t('settings.apiKeys.keyConfigured')}</span>
+              ) : (
+                <span>{t('settings.apiKeys.keyNotConfigured')}</span>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* GLM Settings */}
-      {localSettings.llmProvider === 'glm' && (
+      {/* Config Panel - shows the provider being VIEWED */}
+      {viewingProvider === 'glm' && (
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 mb-6">
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-            {t('settings.apiKeys.glm.configTitle')}
-          </h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+              {t('settings.apiKeys.glm.configTitle')}
+            </h3>
+            {/* Use This Provider button */}
+            {localSettings.llmProvider !== 'glm' && localSettings.glmApiKey && (
+              <button
+                type="button"
+                onClick={() => handleSetProvider('glm')}
+                disabled={saveSettingsMutation.isPending}
+                className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {t('settings.apiKeys.useThisProvider')}
+              </button>
+            )}
+          </div>
 
           <div className="space-y-4">
             <div>
@@ -286,12 +338,24 @@ export function ApiKeysSection() {
         </div>
       )}
 
-      {/* Claude Settings */}
-      {localSettings.llmProvider === 'claude' && (
+      {viewingProvider === 'claude' && (
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 mb-6">
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-            {t('settings.apiKeys.claude.configTitle')}
-          </h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+              {t('settings.apiKeys.claude.configTitle')}
+            </h3>
+            {/* Use This Provider button */}
+            {localSettings.llmProvider !== 'claude' && localSettings.claudeApiKey && (
+              <button
+                type="button"
+                onClick={() => handleSetProvider('claude')}
+                disabled={saveSettingsMutation.isPending}
+                className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {t('settings.apiKeys.useThisProvider')}
+              </button>
+            )}
+          </div>
 
           <div className="space-y-4">
             <div>

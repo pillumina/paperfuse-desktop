@@ -28,6 +28,11 @@
     "title": "API 密钥",
     "description": "配置用于论文分析的 LLM 提供商",
     "provider": "LLM 提供商",
+    "providerHelp": "点击提供商卡片查看或编辑配置。您的设置会自动保存。",
+    "active": "已启用",
+    "keyConfigured": "已配置密钥",
+    "keyNotConfigured": "未配置",
+    "useThisProvider": "启用此提供商",
     "glm": {
       "name": "智谱 GLM",
       "description": "性价比高，适合中国用户",

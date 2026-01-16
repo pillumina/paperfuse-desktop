@@ -43,7 +43,7 @@ pub fn get_db_path() -> PathBuf {
 
     #[cfg(target_os = "linux")]
     {
-        if let Some(home = std::env::var_os("HOME") {
+        if let Some(home) = std::env::var_os("HOME") {
             let mut path = PathBuf::from(&home);
             path.push(".local");
             path.push("share");

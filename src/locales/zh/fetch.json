@@ -108,7 +108,7 @@
     "modeStandard": "标准",
     "modeFull": "完整",
     "modeStandardDesc": "引言 + 结论分析，包含新颖性和有效性评分",
-    "modeFullDesc": "完整论文分析，包含实验完整性、算法流程图和复杂度分析",
+    "modeFullDesc": "完整论文分析（排除附录、参考文献），包含实验完整性、算法流程图和复杂度分析",
     "changeMode": "更改模式",
     "minRelevance": {
       "label": "最低相关性评分",

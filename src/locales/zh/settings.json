@@ -351,6 +351,7 @@
   "analysis": {
     "title": "分析配置",
     "description": "自定义论文分析时启用的分析模块",
+    "globalModeDescription": "选择所有论文的默认分析模式。标准模式使用摘要+引言/结论。完整模式分析完整论文（排除附录、参考文献）。",
     "saved": "分析配置保存成功！",
     "savedDescription": "您的分析偏好已更新。",
     "saveChanges": "保存更改",

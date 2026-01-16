@@ -351,6 +351,7 @@
   "analysis": {
     "title": "Analysis Configuration",
     "description": "Customize which analysis modules are enabled for paper analysis",
+    "globalModeDescription": "Choose the default analysis mode. Standard uses abstract + intro/conclusion. Full analyzes the complete paper (excluding appendices, references).",
     "saved": "Analysis configuration saved successfully!",
     "savedDescription": "Your analysis preferences have been updated.",
     "saveChanges": "Save Changes",

@@ -117,7 +117,7 @@
     "modeStandard": "Standard",
     "modeFull": "Full",
     "modeStandardDesc": "Introduction + Conclusion analysis with novelty and effectiveness scores",
-    "modeFullDesc": "Full paper analysis with experiment completeness, algorithm flowcharts, and complexity analysis",
+    "modeFullDesc": "Full paper analysis (excluding appendices, references) with experiment completeness, flowcharts, and complexity analysis",
     "changeMode": "Change Mode",
     "minRelevance": {
       "label": "Min Relevance Score",

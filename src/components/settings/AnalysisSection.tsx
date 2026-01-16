@@ -2,10 +2,12 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { invoke } from '@tauri-apps/api/core';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { AnalysisBlockConfig, UserBlockConfig, UserAnalysisConfig, BlockCategory, BlockRunMode } from '../../lib/types';
+import { useSettings } from '../../hooks/useSettings';
 
 export function AnalysisSection() {
   const { t } = useLanguage();
   const queryClient = useQueryClient();
+  const { data: settings, refetch: refetchSettings } = useSettings();
 
   // Fetch available blocks and user config
   const { data: availableBlocks, isLoading: loadingBlocks } = useQuery({
@@ -18,7 +20,7 @@ export function AnalysisSection() {
     queryFn: () => invoke<UserAnalysisConfig>('get_analysis_config'),
   });
 
-  // Save mutation
+  // Save mutation for analysis config
   const saveMutation = useMutation({
     mutationFn: (config: UserAnalysisConfig) => invoke('save_analysis_config', { config }),
     onSuccess: () => {
@@ -28,6 +30,19 @@ export function AnalysisSection() {
       console.error('Failed to save analysis config:', error);
     },
   });
+
+  // Save deep analysis mode
+  const saveDeepAnalysisMode = async (mode: 'standard' | 'full') => {
+    try {
+      await invoke('set_setting', {
+        key: 'deepAnalysisMode',
+        value: mode,
+      });
+      await refetchSettings();
+    } catch (error) {
+      console.error('Failed to save deep analysis mode:', error);
+    }
+  };
 
   // Group blocks by category
   const groupedBlocks = availableBlocks
@@ -96,6 +111,49 @@ export function AnalysisSection() {
         <p className="text-gray-600 dark:text-gray-400">
           {t('settings.analysis.description')}
         </p>
+      </div>
+
+      {/* Global Deep Analysis Mode */}
+      <div className="mb-8 p-5 bg-gray-50 dark:bg-gray-900/30 rounded-lg border border-gray-200 dark:border-gray-700">
+        <div className="mb-4">
+          <p className="text-base font-semibold text-gray-700 dark:text-gray-300 mb-1">
+            {t('fetch.deepAnalysis.mode')}
+          </p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            {t('settings.analysis.globalModeDescription')}
+          </p>
+        </div>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex gap-2 flex-shrink-0">
+            <button
+              type="button"
+              onClick={() => saveDeepAnalysisMode('standard')}
+              className={`whitespace-nowrap px-4 py-2.5 text-sm font-medium rounded-lg border-2 transition-all ${
+                settings?.deepAnalysisMode !== 'full'
+                  ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 scale-105'
+                  : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-gray-400 dark:hover:border-gray-500'
+              }`}
+            >
+              {t('fetch.deepAnalysis.modeStandard')}
+            </button>
+            <button
+              type="button"
+              onClick={() => saveDeepAnalysisMode('full')}
+              className={`whitespace-nowrap px-4 py-2.5 text-sm font-medium rounded-lg border-2 transition-all ${
+                settings?.deepAnalysisMode === 'full'
+                  ? 'border-purple-600 bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 scale-105'
+                  : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:border-gray-400 dark:hover:border-gray-500'
+              }`}
+            >
+              {t('fetch.deepAnalysis.modeFull')}
+            </button>
+          </div>
+          <div className="text-xs text-gray-500 dark:text-gray-400">
+            {settings?.deepAnalysisMode === 'full'
+              ? t('fetch.deepAnalysis.modeFullDesc')
+              : t('fetch.deepAnalysis.modeStandardDesc')}
+          </div>
+        </div>
       </div>
 
       {/* Basic Modules */}

@@ -5,7 +5,11 @@
 
 use crate::database::SettingsRepository;
 use crate::models::{ScheduleRun, ScheduleStatus};
-use crate::scheduler::{calculate_next_run, install_plist, remove_plist, ScheduleRunRepository};
+use crate::scheduler::{calculate_next_run, ScheduleRunRepository};
+
+#[cfg(target_os = "macos")]
+use crate::scheduler::{install_plist, remove_plist};
+
 use sqlx::SqlitePool;
 use std::sync::Arc;
 use tauri::State;

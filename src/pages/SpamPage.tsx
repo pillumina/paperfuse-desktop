@@ -1,21 +1,22 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { invoke } from '@tauri-apps/api/core';
 import { useLanguage } from '../contexts/LanguageContext';
 import {
-  ArrowLeft,
   RotateCcw,
   Trash2,
-  AlertCircle,
   CheckSquare,
   Square,
+  MoreVertical,
+  Ban,
+  X,
 } from 'lucide-react';
 import { VirtualPaperGrid } from '../components/papers/VirtualPaperGrid';
 import { VirtualPaperList } from '../components/papers/VirtualPaperList';
 import { Toast } from '../components/common/Toast';
 import { Modal } from '../components/common/Modal';
 import type { Paper } from '../lib/types';
-import '../styles/transitions.css';
+import '../styles/animations.css';
 
 interface SpamPageProps {
   viewMode: 'grid' | 'list';
@@ -24,7 +25,6 @@ interface SpamPageProps {
 export default function SpamPage({ viewMode }: SpamPageProps) {
   const { t } = useLanguage();
   const navigate = useNavigate();
-  const contentRef = useRef<HTMLDivElement>(null);
   const [papers, setPapers] = useState<Paper[]>([]);
   const [loading, setLoading] = useState(true);
   const [spamCount, setSpamCount] = useState<number>(0);
@@ -33,6 +33,7 @@ export default function SpamPage({ viewMode }: SpamPageProps) {
   // Selection state
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedPaperIds, setSelectedPaperIds] = useState<Set<string>>(new Set());
+  const [showActionMenu, setShowActionMenu] = useState(false);
 
   // Modal state
   const [modal, setModal] = useState<{
@@ -58,7 +59,6 @@ export default function SpamPage({ viewMode }: SpamPageProps) {
       ]);
       setPapers(papersData);
       setSpamCount(countData);
-      // Clear selection when papers are reloaded
       setSelectedPaperIds(new Set());
     } catch (error) {
       console.error('Failed to load spam papers:', error);
@@ -73,10 +73,19 @@ export default function SpamPage({ viewMode }: SpamPageProps) {
   }, []);
 
   const togglePaperSelection = (paperId: string) => {
+    // Auto-enter selection mode on first click
+    if (!isSelectionMode) {
+      setIsSelectionMode(true);
+    }
+
     setSelectedPaperIds(prev => {
       const newSet = new Set(prev);
       if (newSet.has(paperId)) {
         newSet.delete(paperId);
+        // Exit selection mode if nothing selected
+        if (newSet.size === 0 && isSelectionMode) {
+          setIsSelectionMode(false);
+        }
       } else {
         newSet.add(paperId);
       }
@@ -110,6 +119,7 @@ export default function SpamPage({ viewMode }: SpamPageProps) {
         await loadSpamPapers();
       },
     });
+    setShowActionMenu(false);
   };
 
   const handleDelete = async (id: string) => {
@@ -182,70 +192,85 @@ export default function SpamPage({ viewMode }: SpamPageProps) {
         await loadSpamPapers();
       },
     });
+    setShowActionMenu(false);
   };
 
-  // Don't return early for loading - let content fade in naturally
   const selectedCount = selectedPaperIds.size;
   const isAllSelected = selectedCount === papers.length && papers.length > 0;
 
   return (
-    <div className="max-w-[1920px] mx-auto p-6">
-      {/* Header */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-4">
+    <div className="p-8">
+      {/* Minimal Header */}
+      <div className="flex items-center justify-between mb-6">
+        {/* Left: Title */}
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-orange-100 dark:bg-orange-900/20 rounded-lg">
+            <Ban className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
+              {t('spam.title')}
+            </h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
+              {t('spam.description')}
+              {spamCount > 0 && (
+                <>
+                  <span className="text-gray-300 dark:text-gray-600">•</span>
+                  <span className="font-medium">{spamCount} {t('spam.papers')}</span>
+                </>
+              )}
+            </p>
+          </div>
+        </div>
+
+        {/* Right: Actions */}
+        {!isSelectionMode && papers.length > 0 && (
+          <div className="flex items-center gap-2">
+            {/* Select mode toggle */}
             <button
-              onClick={() => navigate('/papers')}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-              title={t('common.buttons.back')}
+              onClick={() => setIsSelectionMode(true)}
+              className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+              title={t('spam.selectMode')}
             >
-              <ArrowLeft className="w-5 h-5" />
+              <CheckSquare className="w-4 h-4" />
             </button>
-            <div>
-              <h1 className="text-2xl font-bold flex items-center gap-2">
-                <AlertCircle className="w-6 h-6 text-orange-500" />
-                {t('spam.title')}
-                {spamCount > 0 && (
-                  <span className="text-sm font-normal text-gray-600 dark:text-gray-400">
-                    ({spamCount})
-                  </span>
-                )}
-              </h1>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                {t('spam.description')}
-              </p>
+
+            {/* More actions menu */}
+            <div className="relative">
+              <button
+                onClick={() => setShowActionMenu(!showActionMenu)}
+                className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+              >
+                <MoreVertical className="w-4 h-4" />
+              </button>
+
+              {showActionMenu && (
+                <>
+                  <div
+                    className="fixed inset-0 z-10"
+                    onClick={() => setShowActionMenu(false)}
+                  />
+                  <div className="absolute right-0 top-full mt-1 z-20 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-lg py-1 min-w-[180px]">
+                    <button
+                      onClick={handleRestoreAll}
+                      className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 transition-colors"
+                    >
+                      <RotateCcw className="w-4 h-4" />
+                      {t('spam.restoreAll')}
+                    </button>
+                    <button
+                      onClick={handleClearAll}
+                      className="w-full px-4 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2 transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      {t('spam.clearAll')}
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
-
-          {/* Normal mode buttons */}
-          {!isSelectionMode && papers.length > 0 && (
-            <div className="flex items-center gap-2 flex-wrap">
-              <button
-                onClick={() => setIsSelectionMode(true)}
-                className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors whitespace-nowrap"
-              >
-                <CheckSquare className="w-3.5 h-3.5" />
-                {t('spam.selectMode')}
-              </button>
-
-              <button
-                onClick={handleRestoreAll}
-                className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors shadow-sm hover:shadow whitespace-nowrap"
-              >
-                <RotateCcw className="w-3.5 h-3.5" />
-                {t('spam.restoreAll')}
-              </button>
-
-              <button
-                onClick={handleClearAll}
-                className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors whitespace-nowrap"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-                {t('spam.clearAll')}
-              </button>
-            </div>
-          )}
-        </div>
+        )}
       </div>
 
       {/* Papers */}
@@ -257,23 +282,19 @@ export default function SpamPage({ viewMode }: SpamPageProps) {
           </div>
         </div>
       ) : papers.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-center">
-          <AlertCircle className="w-16 h-16 text-gray-400 dark:text-gray-600 mb-4" />
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
+        <div className="flex flex-col items-center justify-center py-20">
+          <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4">
+            <Ban className="w-8 h-8 text-gray-400" />
+          </div>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
             {t('spam.empty')}
           </h2>
-          <p className="text-gray-600 dark:text-gray-400 mb-6">
+          <p className="text-sm text-gray-500 dark:text-gray-400 text-center max-w-md">
             {t('spam.emptyDescription')}
           </p>
-          <button
-            onClick={() => navigate('/papers')}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-          >
-            {t('common.buttons.back')}
-          </button>
         </div>
       ) : (
-        <div ref={contentRef} className="relative">
+        <div className="relative">
           {viewMode === 'grid' ? (
             <VirtualPaperGrid
               papers={papers}
@@ -296,65 +317,65 @@ export default function SpamPage({ viewMode }: SpamPageProps) {
         </div>
       )}
 
-      {/* Floating Batch Action Bar */}
+      {/* Compact Selection Bar */}
       {isSelectionMode && papers.length > 0 && (
-        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-40">
-          <div className="flex items-center gap-2 px-4 py-3 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700">
-            {/* Selection count */}
-            <div className="flex items-center gap-3 pr-4 border-r border-gray-200 dark:border-gray-700">
-              <button
-                onClick={toggleSelectAll}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                title={isAllSelected ? t('spam.deselectAll') : t('spam.selectAll')}
-              >
-                {isAllSelected ? (
-                  <CheckSquare className="w-5 h-5 text-blue-600" />
-                ) : (
-                  <Square className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                )}
-              </button>
-              <span className="text-sm font-medium text-gray-900 dark:text-gray-100 min-w-[80px]">
-                {selectedCount > 0 ? t('spam.selected', { count: selectedCount }) : t('spam.noneSelected')}
-              </span>
-            </div>
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40">
+          <div className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700">
+            {/* Select all checkbox */}
+            <button
+              onClick={toggleSelectAll}
+              className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              title={isAllSelected ? t('spam.deselectAll') : t('spam.selectAll')}
+            >
+              {isAllSelected ? (
+                <CheckSquare className="w-4 h-4 text-blue-600" />
+              ) : (
+                <Square className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+              )}
+            </button>
+
+            {/* Count */}
+            <span className="text-sm font-medium text-gray-900 dark:text-gray-100 min-w-[60px]">
+              {selectedCount > 0 ? `${selectedCount} ${t('spam.papers')}` : t('spam.noneSelected')}
+            </span>
+
+            {/* Divider */}
+            <div className="w-px h-5 bg-gray-200 dark:bg-gray-700" />
 
             {/* Action buttons */}
-            {selectedCount > 0 ? (
+            {selectedCount > 0 && (
               <>
                 <button
                   onClick={handleBatchRestore}
-                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                  className="p-1.5 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                  title={t('spam.restoreSelected')}
                 >
                   <RotateCcw className="w-4 h-4" />
-                  {t('spam.restoreSelected')}
                 </button>
 
                 <button
                   onClick={handleBatchDelete}
-                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                  className="p-1.5 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                  title={t('spam.deleteSelected')}
                 >
                   <Trash2 className="w-4 h-4" />
-                  {t('spam.deleteSelected')}
                 </button>
               </>
-            ) : (
-              <span className="text-sm text-gray-500 dark:text-gray-400 px-2">
-                {t('spam.selectPapers')}
-              </span>
             )}
 
             {/* Divider */}
-            <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1" />
+            <div className="w-px h-5 bg-gray-200 dark:bg-gray-700" />
 
-            {/* Cancel button */}
+            {/* Exit */}
             <button
               onClick={() => {
                 setIsSelectionMode(false);
                 setSelectedPaperIds(new Set());
               }}
-              className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              className="p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              title={t('spam.exit')}
             >
-              {t('spam.exit')}
+              <X className="w-4 h-4" />
             </button>
           </div>
         </div>

@@ -1,6 +1,7 @@
 {
   "title": "Spam",
   "description": "These papers have been marked as spam and won't appear in the main list, but are kept to prevent re-downloading.",
+  "papers": "papers",
   "empty": "Spam is empty",
   "emptyDescription": "No papers have been marked as spam",
   "markAsSpam": "Mark as spam",

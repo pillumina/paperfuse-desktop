@@ -1,6 +1,7 @@
 {
   "title": "垃圾箱",
   "description": "这些是被标记为垃圾的论文，它们不会在主列表中显示，但会被保留以防止重复下载。",
+  "papers": "篇",
   "empty": "垃圾箱为空",
   "emptyDescription": "没有被标记为垃圾的论文",
   "markAsSpam": "标记为垃圾",

@@ -17,6 +17,7 @@ import { LanguageToggle } from '../common/LanguageToggle';
 import { SlimProgressBar } from '../common/SlimProgressBar';
 import { FloatingProgressCard } from '../common/FloatingProgressCard';
 import { useLanguage } from '../../contexts/LanguageContext';
+import '../../styles/transitions.css';
 
 interface AppShellProps {
   children: ReactNode;
@@ -150,14 +151,19 @@ export default function AppShell({ children }: AppShellProps) {
                 key={item.path}
                 to={item.path}
                 className={cn(
-                  'flex items-center gap-3 px-4 py-2.5 rounded-xl cursor-pointer transition-all duration-200',
+                  'nav-item relative flex items-center gap-3 px-4 py-2.5 rounded-xl cursor-pointer transition-all duration-200',
                   isActive
-                    ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 font-medium'
+                    ? 'active bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400 font-medium'
                     : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
                 )}
               >
-                <Icon className="w-5 h-5" />
-                <span>{item.label}</span>
+                {/* Background slide indicator */}
+                <span className={cn(
+                  'nav-bg-indicator',
+                  isActive ? 'w-full' : 'w-0'
+                )} />
+                <Icon className="w-5 h-5 relative z-10" />
+                <span className="relative z-10">{item.label}</span>
               </Link>
             );
           })}

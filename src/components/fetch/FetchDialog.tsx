@@ -12,6 +12,7 @@ import {
   showFetchCompleteNotification,
 } from '../../lib/notifications';
 import '../../styles/animations.css';
+import '../../styles/transitions.css';
 
 interface FetchDialogProps {
   isOpen: boolean;
@@ -699,7 +700,7 @@ export default function FetchDialog({
               <>
                 {/* Basic Tab */}
                 {activeTab === 'basic' && (
-                  <div className="space-y-6">
+                  <div className="space-y-6 tab-content">
                     <div>
                       <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                         {t('fetch.basicOptions')}
@@ -912,7 +913,7 @@ export default function FetchDialog({
 
                 {/* AI Settings Tab */}
                 {activeTab === 'ai' && (
-                  <div className="space-y-5">
+                  <div className="space-y-5 tab-content">
                     <div>
                       <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                         AI Settings
@@ -1134,7 +1135,7 @@ export default function FetchDialog({
 
                 {/* Deep Analysis Tab */}
                 {activeTab === 'analysis' && (
-                  <div className="space-y-5">
+                  <div className="space-y-5 tab-content">
                     <div>
                       <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                         {t('fetch.deepAnalysis.label')}

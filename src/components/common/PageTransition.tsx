@@ -1,57 +1,56 @@
-import { useEffect, useRef } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
+import '../styles/transitions.css';
 
 interface PageTransitionProps {
   children: React.ReactNode;
 }
 
-/**
- * PageTransition adds smooth fade-in and slide animations
- * when navigating between pages.
- * Respects prefers-reduced-motion for accessibility.
- */
+// Define route order for slide direction
+const ROUTE_ORDER = ['/', '/papers', '/spam', '/collections', '/settings'];
+
 export function PageTransition({ children }: PageTransitionProps) {
   const location = useLocation();
-  const containerRef = useRef<HTMLDivElement>(null);
+  const prevLocationRef = useRef(location);
+  const [transitionClass, setTransitionClass] = useState('');
+  const [displayChildren, setDisplayChildren] = useState(children);
 
   useEffect(() => {
-    // Check for reduced motion preference
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (location !== prevLocationRef.current) {
+      const prevIndex = ROUTE_ORDER.indexOf(prevLocationRef.current.pathname);
+      const currIndex = ROUTE_ORDER.indexOf(location.pathname);
 
-    if (prefersReducedMotion) {
-      return;
+      // Determine direction based on route order
+      const direction = currIndex > prevIndex ? 'right' : 'left';
+
+      // Add exit animation to old content
+      setTransitionClass(`page-exit-to-${direction}`);
+
+      // After exit animation, switch content and add enter animation
+      const timer = setTimeout(() => {
+        setDisplayChildren(children);
+        setTransitionClass(`page-enter-from-${direction}`);
+
+        // Clean up animation class after it completes
+        const cleanupTimer = setTimeout(() => {
+          setTransitionClass('');
+        }, 300);
+
+        return () => clearTimeout(cleanupTimer);
+      }, 250);
+
+      prevLocationRef.current = location;
+
+      return () => clearTimeout(timer);
+    } else {
+      // Update children without transition if same route
+      setDisplayChildren(children);
     }
-
-    const element = containerRef.current;
-    if (!element) return;
-
-    // Reset animation
-    element.style.opacity = '0';
-    element.style.transform = 'translateX(20px)';
-
-    // Trigger animation in next frame
-    requestAnimationFrame(() => {
-      element.style.transition = 'opacity 0.3s ease-out, transform 0.3s ease-out';
-      element.style.opacity = '1';
-      element.style.transform = 'translateX(0)';
-    });
-
-    return () => {
-      // Cleanup
-      element.style.transition = '';
-    };
-  }, [location.pathname]); // Re-run on route change
+  }, [location, children]);
 
   return (
-    <div
-      ref={containerRef}
-      className="page-transition"
-      style={{
-        opacity: 1,
-        transform: 'translateX(0)',
-      }}
-    >
-      {children}
+    <div className={`page-wrapper ${transitionClass}`}>
+      {displayChildren}
     </div>
   );
 }

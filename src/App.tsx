@@ -9,8 +9,10 @@ import SpamPage from './pages/SpamPage';
 import CollectionsPage from './pages/CollectionsPage';
 import CollectionDetailPage from './pages/CollectionDetailPage';
 import SettingsPage from './pages/SettingsPage';
+import { PageTransition } from './components/common/PageTransition';
 import './App.css';
 import './styles/animations.css';
+import './styles/transitions.css';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -27,13 +29,13 @@ function App() {
       <BrowserRouter>
         <AppShell>
           <Routes>
-            <Route path="/" element={<div className="page-transition"><HomePage /></div>} />
-            <Route path="/papers" element={<div className="page-transition"><PapersPage /></div>} />
-            <Route path="/papers/:id" element={<div className="page-transition"><PaperDetailPage /></div>} />
-            <Route path="/spam" element={<div className="page-transition"><SpamPage viewMode="grid" /></div>} />
-            <Route path="/collections" element={<div className="page-transition"><CollectionsPage /></div>} />
-            <Route path="/collections/:id" element={<div className="page-transition"><CollectionDetailPage /></div>} />
-            <Route path="/settings" element={<div className="page-transition"><SettingsPage /></div>} />
+            <Route path="/" element={<PageTransition><HomePage /></PageTransition>} />
+            <Route path="/papers" element={<PageTransition><PapersPage /></PageTransition>} />
+            <Route path="/papers/:id" element={<PageTransition><PaperDetailPage /></PageTransition>} />
+            <Route path="/spam" element={<PageTransition><SpamPage viewMode="grid" /></PageTransition>} />
+            <Route path="/collections" element={<PageTransition><CollectionsPage /></PageTransition>} />
+            <Route path="/collections/:id" element={<PageTransition><CollectionDetailPage /></PageTransition>} />
+            <Route path="/settings" element={<PageTransition><SettingsPage /></PageTransition>} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </AppShell>

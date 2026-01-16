@@ -93,10 +93,9 @@ pub fn init_logging() {
         // Get current date for log file name
         let now = chrono::Local::now();
         let log_file_name = format!("paperfuse_{}.log", now.format("%Y%m%d"));
-        let log_file_path = log_dir.join(&log_file_name);
 
         // Create file appender with rotation
-        let file_appender = tracing_appender::rolling::never(&log_dir, log_file_name);
+        let file_appender = tracing_appender::rolling::never(&log_dir, log_file_name.clone());
 
         let subscriber = tracing_subscriber::registry()
             .with(env_filter)
@@ -117,7 +116,7 @@ pub fn init_logging() {
 
         // Also print to console on startup for visibility
         println!("PaperFuse log directory: {}", log_dir.display());
-        println!("Log file: {}", log_file_name);
+        println!("Log file: {}", log_file_name.clone());
     }
 }
 

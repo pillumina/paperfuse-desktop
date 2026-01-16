@@ -42,4 +42,7 @@ rand = "0.8"
 open = "5"
 lazy_static = "1.5"
 select = "0.6"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tracing-appender = "0.2"
 

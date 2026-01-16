@@ -14,6 +14,7 @@ mod scheduler;
 mod latex_parser;
 mod html_parser;
 mod analysis;
+mod logging;
 
 // Re-export specific types instead of glob to avoid ambiguity
 pub use models::{
@@ -61,6 +62,9 @@ pub fn run() {
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_fs::init())
         .setup(|app| {
+            // Initialize logging first
+            logging::init_logging();
+
             // Initialize database synchronously for setup
             let rt = tokio::runtime::Runtime::new().expect("Failed to create runtime");
 

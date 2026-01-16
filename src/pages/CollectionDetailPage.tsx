@@ -8,6 +8,7 @@ import { ViewToggle } from '../components/papers/ViewToggle';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { useLanguage } from '../contexts/LanguageContext';
+import '../styles/animations.css';
 
 export default function CollectionDetailPage() {
   const { t } = useLanguage();
@@ -146,7 +147,7 @@ export default function CollectionDetailPage() {
           </p>
         </div>
       ) : viewMode === 'grid' ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 tab-content">
           {papers.map((paper) => (
             <PaperCard
               key={paper.id}
@@ -156,7 +157,7 @@ export default function CollectionDetailPage() {
           ))}
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-3 tab-content">
           {papers.map((paper) => (
             <div
               key={paper.id}

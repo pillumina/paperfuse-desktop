@@ -31,7 +31,7 @@ export function CollectionCard({ collection, onDelete, onEdit, onClick }: Collec
         bg-white dark:bg-gray-800
         rounded-xl border border-gray-200 dark:border-gray-700
         hover:shadow-card-hover hover:-translate-y-0.5 hover:border-blue-400
-        active:translate-y-0
+        active:scale-[0.98] active:translate-y-0
         transition-all duration-200 ease-out
         overflow-hidden
       `}

@@ -7,6 +7,7 @@ import { CreateCollectionDialog } from '../components/collections/CreateCollecti
 import { useCollections, useCreateCollection, useDeleteCollection, useUpdateCollection } from '../hooks/useCollections';
 import { toast } from 'sonner';
 import type { CollectionWithPaperCount, CreateCollectionInput } from '../lib/types';
+import '../styles/animations.css';
 
 export default function CollectionsPage() {
   const { t } = useLanguage();
@@ -138,7 +139,7 @@ export default function CollectionsPage() {
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 tab-content">
           {collections.map((collection) => (
             <CollectionCard
               key={collection.id}

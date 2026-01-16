@@ -85,14 +85,14 @@ export function CollectionCard({ collection, onDelete, onEdit, onClick }: Collec
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between text-sm">
-          <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
-            <FileText className="w-4 h-4" />
-            <span>{t('collections.paperCount', { count: collection.paper_count })}</span>
+        <div className="flex items-center justify-between text-sm gap-3">
+          <div className="flex items-center gap-1.5 text-gray-600 dark:text-gray-400 min-w-0">
+            <FileText className="w-4 h-4 shrink-0" />
+            <span className="truncate">{t('collections.paperCount', { count: collection.paper_count })}</span>
           </div>
-          <div className="flex items-center gap-2 text-gray-500 dark:text-gray-500">
+          <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-500 shrink-0">
             <Calendar className="w-4 h-4" />
-            <span>Updated {formatRelativeTime(collection.updated_at)}</span>
+            <span className="whitespace-nowrap">{formatRelativeTime(collection.updated_at)}</span>
           </div>
         </div>
       </div>

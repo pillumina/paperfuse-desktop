@@ -13,6 +13,11 @@
   "create": "Create Collection",
   "edit": "Edit Collection",
   "delete": "Delete Collection",
+  "dialog": {
+    "newTitle": "New Collection",
+    "editTitle": "Edit Collection",
+    "saveChanges": "Save Changes"
+  },
   "name": "Name",
   "namePlaceholder": "My Research",
   "description": "Description",

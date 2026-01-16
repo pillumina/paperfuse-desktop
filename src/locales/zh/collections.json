@@ -13,6 +13,11 @@
   "create": "创建收藏",
   "edit": "编辑收藏",
   "delete": "删除收藏",
+  "dialog": {
+    "newTitle": "新建收藏",
+    "editTitle": "编辑收藏",
+    "saveChanges": "保存更改"
+  },
   "name": "名称",
   "namePlaceholder": "我的研究",
   "description": "描述",

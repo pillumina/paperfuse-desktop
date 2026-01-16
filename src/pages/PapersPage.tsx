@@ -5,7 +5,6 @@ import { useDeletePaper, usePapers, usePapersByTag, usePaperCount, useSearchPape
 import { useSettings } from '../hooks/useSettings';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useCollections } from '../hooks/useCollections';
-import { useAutoAnimate } from '@formkit/auto-animate/react';
 import { VirtualPaperList } from '../components/papers/VirtualPaperList';
 import { VirtualPaperGrid } from '../components/papers/VirtualPaperGrid';
 import { PaperSearchBar } from '../components/papers/PaperSearchBar';
@@ -32,7 +31,7 @@ export default function PapersPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const [contentRef] = useAutoAnimate(/* optional config */);
+  const contentRef = useRef<HTMLDivElement>(null);
 
   // View and filter state
   const [viewMode, setViewMode] = useState<ViewMode>('list');

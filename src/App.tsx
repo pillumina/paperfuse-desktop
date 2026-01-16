@@ -9,7 +9,6 @@ import SpamPage from './pages/SpamPage';
 import CollectionsPage from './pages/CollectionsPage';
 import CollectionDetailPage from './pages/CollectionDetailPage';
 import SettingsPage from './pages/SettingsPage';
-import { PageTransition } from './components/common/PageTransition';
 import './App.css';
 
 const queryClient = new QueryClient({
@@ -26,18 +25,16 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <AppShell>
-          <PageTransition>
-            <Routes>
-              <Route path="/" element={<HomePage />} />
-              <Route path="/papers" element={<PapersPage />} />
-              <Route path="/papers/:id" element={<PaperDetailPage />} />
-              <Route path="/spam" element={<SpamPage viewMode="grid" />} />
-              <Route path="/collections" element={<CollectionsPage />} />
-              <Route path="/collections/:id" element={<CollectionDetailPage />} />
-              <Route path="/settings" element={<SettingsPage />} />
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </PageTransition>
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/papers" element={<PapersPage />} />
+            <Route path="/papers/:id" element={<PaperDetailPage />} />
+            <Route path="/spam" element={<SpamPage viewMode="grid" />} />
+            <Route path="/collections" element={<CollectionsPage />} />
+            <Route path="/collections/:id" element={<CollectionDetailPage />} />
+            <Route path="/settings" element={<SettingsPage />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
         </AppShell>
         <Toaster
           position="top-right"

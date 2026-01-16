@@ -19,9 +19,9 @@ export function usePapers(options: UsePapersOptions = {}) {
   return useQuery({
     queryKey: ['papers', { limit, offset }],
     queryFn: () => invoke<Paper[]>('get_papers', { limit, offset }),
-    staleTime: 1000 * 30, // 30 seconds - shorter for more responsive updates
-    refetchOnWindowFocus: true,
-    refetchOnMount: true,
+    staleTime: 1000 * 60 * 5, // 5 minutes - data doesn't change that often
+    refetchOnWindowFocus: false, // Don't refetch on window focus to prevent jitter
+    refetchOnMount: false, // Don't refetch on mount if data is fresh
   });
 }
 
@@ -112,8 +112,8 @@ export function usePaperCount() {
   return useQuery({
     queryKey: ['paperCount'],
     queryFn: () => invoke<number>('get_paper_count'),
-    staleTime: 1000 * 30, // 30 seconds - shorter for more responsive updates
-    refetchOnWindowFocus: true,
+    staleTime: 1000 * 60 * 5, // 5 minutes - count doesn't change that often
+    refetchOnWindowFocus: false, // Don't refetch on window focus to prevent jitter
   });
 }
 

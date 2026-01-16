@@ -1,19 +1,22 @@
 import { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { FileText, Settings as SettingsIcon, Download, BookOpen, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
-import { invoke } from '@tauri-apps/api/core';
 import FetchDialog from '../components/fetch/FetchDialog';
 import { useFetchProgress } from '../contexts/FetchProgressContext';
 import { useCollections } from '../hooks/useCollections';
+import { useSettings } from '../hooks/useSettings';
+import { usePaperCount } from '../hooks/usePapers';
 import { useLanguage } from '../contexts/LanguageContext';
 import type { Settings } from '../lib/types';
 
 export default function HomePage() {
   const { t } = useLanguage();
+  const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const [isFetchDialogOpen, setIsFetchDialogOpen] = useState(false);
-  const [settings, setSettings] = useState<Settings | null>(null);
-  const [paperCount, setPaperCount] = useState<number>(0);
+  const { data: settings } = useSettings();
+  const { data: paperCount = 0 } = usePaperCount();
   const { isFetching, isCompleting, fetchStatus } = useFetchProgress();
   const { data: collections } = useCollections();
 
@@ -34,31 +37,9 @@ export default function HomePage() {
     }
   }, [searchParams, setSearchParams]);
 
-  useEffect(() => {
-    loadSettings();
-    loadPaperCount();
-  }, []);
-
-  const loadSettings = async () => {
-    try {
-      const result = await invoke<Settings>('get_settings');
-      setSettings(result);
-    } catch (err) {
-      console.error('Failed to load settings:', err);
-    }
-  };
-
-  const loadPaperCount = async () => {
-    try {
-      const count = await invoke<number>('get_paper_count');
-      setPaperCount(count);
-    } catch (err) {
-      console.error('Failed to load paper count:', err);
-    }
-  };
-
   const handleFetchComplete = () => {
-    loadPaperCount();
+    // Invalidate paper count query to refresh it
+    queryClient.invalidateQueries({ queryKey: ['paperCount'] });
   };
 
   return (

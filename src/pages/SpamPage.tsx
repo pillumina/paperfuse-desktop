@@ -1,8 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { invoke } from '@tauri-apps/api/core';
 import { useLanguage } from '../contexts/LanguageContext';
-import { useAutoAnimate } from '@formkit/auto-animate/react';
 import {
   ArrowLeft,
   RotateCcw,
@@ -24,7 +23,7 @@ interface SpamPageProps {
 export default function SpamPage({ viewMode }: SpamPageProps) {
   const { t } = useLanguage();
   const navigate = useNavigate();
-  const [contentRef] = useAutoAnimate();
+  const contentRef = useRef<HTMLDivElement>(null);
   const [papers, setPapers] = useState<Paper[]>([]);
   const [loading, setLoading] = useState(true);
   const [spamCount, setSpamCount] = useState<number>(0);

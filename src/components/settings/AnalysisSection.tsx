@@ -35,7 +35,7 @@ export function AnalysisSection() {
   const saveDeepAnalysisMode = async (mode: 'standard' | 'full') => {
     try {
       await invoke('set_setting', {
-        key: 'deepAnalysisMode',
+        key: 'deep_analysis_mode',
         value: mode,
       });
       await refetchSettings();

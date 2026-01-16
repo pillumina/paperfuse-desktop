@@ -199,6 +199,12 @@ pub async fn analyze_paper(
             .send_chat_request(&prompt, depth.as_str())
             .await
             .map_err(|e| {
+                tracing::error!(
+                    paper_id = %paper_id,
+                    analysis_mode = %analysis_mode,
+                    error = %e,
+                    "LLM request failed for paper analysis"
+                );
                 eprintln!("[analyze_paper] LLM request failed: {}", e);
                 e.to_string()
             })?;
@@ -240,6 +246,14 @@ pub async fn analyze_paper(
             eprintln!("[analyze_paper] Attempting to parse as FullAnalysisResult...");
             let result: crate::llm::FullAnalysisResult = serde_json::from_str(&fixed_response)
                 .map_err(|e| {
+                    tracing::error!(
+                        paper_id = %paper_id,
+                        analysis_mode = %analysis_mode,
+                        response_length = fixed_response.len(),
+                        error = %e,
+                        response_preview = %fixed_response.chars().take(2000).collect::<String>(),
+                        "Failed to parse full analysis JSON response"
+                    );
                     eprintln!("[analyze_paper] ===== PARSE ERROR =====");
                     eprintln!("[analyze_paper] Error: {}", e);
                     eprintln!("[analyze_paper] Response length: {}", fixed_response.len());
@@ -260,6 +274,14 @@ pub async fn analyze_paper(
             eprintln!("[analyze_paper] Attempting to parse as StandardAnalysisResult...");
             let result: crate::llm::StandardAnalysisResult = serde_json::from_str(&fixed_response)
                 .map_err(|e| {
+                    tracing::error!(
+                        paper_id = %paper_id,
+                        analysis_mode = %analysis_mode,
+                        response_length = fixed_response.len(),
+                        error = %e,
+                        response_preview = %fixed_response.chars().take(2000).collect::<String>(),
+                        "Failed to parse standard analysis JSON response"
+                    );
                     eprintln!("[analyze_paper] ===== PARSE ERROR =====");
                     eprintln!("[analyze_paper] Error: {}", e);
                     eprintln!("[analyze_paper] Response length: {}", fixed_response.len());
@@ -285,6 +307,12 @@ pub async fn analyze_paper(
     // Save updated paper
     repo.save(&paper).await
         .map_err(|e| {
+            tracing::error!(
+                paper_id = %paper_id,
+                arxiv_id = %paper.arxiv_id,
+                error = %e,
+                "Failed to save paper analysis to database"
+            );
             eprintln!("[analyze_paper] Failed to save paper: {}", e);
             e.to_string()
         })?;

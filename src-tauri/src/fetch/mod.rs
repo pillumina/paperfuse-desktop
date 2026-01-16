@@ -360,6 +360,13 @@ async fn perform_modular_analysis(
         // Send to LLM
         let llm_response = client.send_chat_request(&prompt, depth.as_str()).await
             .map_err(|e| {
+                tracing::error!(
+                    paper_id = %paper.id,
+                    arxiv_id = %paper.arxiv_id,
+                    analysis_mode = %analysis_mode,
+                    error = %e,
+                    "LLM request failed during batch paper analysis"
+                );
                 eprintln!("[perform_modular_analysis] LLM request failed: {}", e);
                 FetchError::LlmError(e)
             })?;
@@ -388,6 +395,15 @@ async fn perform_modular_analysis(
         AnalysisDepth::Full => {
             let result: crate::llm::FullAnalysisResult = serde_json::from_str(&fixed)
                 .map_err(|e| {
+                    tracing::error!(
+                        paper_id = %paper.id,
+                        arxiv_id = %paper.arxiv_id,
+                        analysis_mode = %analysis_mode,
+                        response_length = fixed.len(),
+                        error = %e,
+                        response_preview = %fixed.chars().take(2000).collect::<String>(),
+                        "Failed to parse full analysis JSON during batch fetch"
+                    );
                     eprintln!("[perform_modular_analysis] Failed to parse full analysis: {}", e);
                     FetchError::LlmError(crate::llm::LlmError::ParseError(e.to_string()))
                 })?;
@@ -434,6 +450,15 @@ async fn perform_modular_analysis(
         AnalysisDepth::Standard => {
             let result: crate::llm::StandardAnalysisResult = serde_json::from_str(&fixed)
                 .map_err(|e| {
+                    tracing::error!(
+                        paper_id = %paper.id,
+                        arxiv_id = %paper.arxiv_id,
+                        analysis_mode = %analysis_mode,
+                        response_length = fixed.len(),
+                        error = %e,
+                        response_preview = %fixed.chars().take(2000).collect::<String>(),
+                        "Failed to parse standard analysis JSON during batch fetch"
+                    );
                     eprintln!("[perform_modular_analysis] Failed to parse standard analysis: {}", e);
                     FetchError::LlmError(crate::llm::LlmError::ParseError(e.to_string()))
                 })?;

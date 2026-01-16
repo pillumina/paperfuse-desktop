@@ -207,7 +207,7 @@ export default function SpamPage({ viewMode }: SpamPageProps) {
             <button
               onClick={() => navigate('/papers')}
               className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-              title={t('buttons.back')}
+              title={t('common.buttons.back')}
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
@@ -272,7 +272,7 @@ export default function SpamPage({ viewMode }: SpamPageProps) {
             onClick={() => navigate('/papers')}
             className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
           >
-            {t('buttons.back')}
+            {t('common.buttons.back')}
           </button>
         </div>
       ) : (

@@ -310,7 +310,7 @@ impl Default for Settings {
             llm_provider: LLMProvider::Glm,
             glm_api_key: None,
             claude_api_key: None,
-            glm_quick_model: Some("glm-4.5-flash".to_string()),
+            glm_quick_model: Some("glm-4.5-air".to_string()),
             glm_deep_model: Some("glm-4.7".to_string()),
             claude_quick_model: Some("claude-haiku".to_string()),
             claude_deep_model: Some("claude-sonnet".to_string()),

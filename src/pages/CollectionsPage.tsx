@@ -134,7 +134,7 @@ export default function CollectionsPage() {
             className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 active:shadow-sm transition-all duration-200 font-medium focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 cursor-pointer"
           >
             <Plus className="w-5 h-5" />
-            {t('collections.createCollection')}
+            {t('collections.page.createCollection')}
           </button>
         </div>
       ) : (

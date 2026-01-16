@@ -7,8 +7,10 @@ import { PaperListItem } from '../components/papers/PaperListItem';
 import { ViewToggle } from '../components/papers/ViewToggle';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { useLanguage } from '../contexts/LanguageContext';
 
 export default function CollectionDetailPage() {
+  const { t } = useLanguage();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { data: collection, isLoading: collectionLoading, error: collectionError } = useCollection(id!);
@@ -18,14 +20,14 @@ export default function CollectionDetailPage() {
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('grid');
 
   const handleDelete = () => {
-    if (confirm('Are you sure you want to delete this collection?')) {
+    if (confirm(t('collections.deleteConfirm'))) {
       deleteMutation.mutate(id!, {
         onSuccess: () => {
-          toast.success('Collection deleted');
+          toast.success(t('collections.messages.deleted'));
           navigate('/collections');
         },
         onError: (error) => {
-          toast.error(`Failed to delete collection: ${error.message}`);
+          toast.error(`${t('collections.messages.deleteFailed')}: ${error.message}`);
         },
       });
     }
@@ -35,7 +37,7 @@ export default function CollectionDetailPage() {
     return (
       <div className="p-8">
         <div className="flex items-center justify-center h-64">
-          <div className="text-gray-500 dark:text-gray-400">Loading collection...</div>
+          <div className="text-gray-500 dark:text-gray-400">{t('collections.page.loading')}</div>
         </div>
       </div>
     );
@@ -45,7 +47,7 @@ export default function CollectionDetailPage() {
     return (
       <div className="p-8">
         <div className="flex items-center justify-center h-64">
-          <div className="text-red-500">Collection not found</div>
+          <div className="text-red-500">{t('collections.page.error')}</div>
         </div>
       </div>
     );
@@ -60,7 +62,7 @@ export default function CollectionDetailPage() {
           className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white mb-4 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
-          Back to Collections
+          {t('collections.page.title')}
         </button>
 
         <div className="flex items-start justify-between">
@@ -84,14 +86,14 @@ export default function CollectionDetailPage() {
               className="flex items-center gap-2 px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
             >
               <Edit2 className="w-4 h-4" />
-              Edit
+              {t('collections.edit')}
             </button>
             <button
               onClick={handleDelete}
               className="flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
             >
               <Trash2 className="w-4 h-4" />
-              Delete
+              {t('collections.delete')}
             </button>
           </div>
         </div>
@@ -102,7 +104,7 @@ export default function CollectionDetailPage() {
             <span className="font-semibold text-gray-900 dark:text-white">
               {papers?.length || 0}
             </span>
-            <span>paper{(papers?.length || 0) !== 1 ? 's' : ''}</span>
+            <span>{t('collections.paperCount', { count: papers?.length || 0 })}</span>
           </div>
         </div>
       </div>
@@ -115,7 +117,7 @@ export default function CollectionDetailPage() {
       {/* Papers */}
       {papersLoading ? (
         <div className="flex items-center justify-center h-64">
-          <div className="text-gray-500 dark:text-gray-400">Loading papers...</div>
+          <div className="text-gray-500 dark:text-gray-400">{t('common.loading')}</div>
         </div>
       ) : !papers || papers.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20">
@@ -136,11 +138,11 @@ export default function CollectionDetailPage() {
           </div>
 
           <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-2">
-            No papers yet
+            {t('collections.empty.title')}
           </h2>
 
           <p className="text-gray-600 dark:text-gray-400 text-center max-w-md">
-            Add papers to this collection to keep them organized
+            {t('collections.empty.description')}
           </p>
         </div>
       ) : viewMode === 'grid' ? (

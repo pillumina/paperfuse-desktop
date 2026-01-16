@@ -5,6 +5,7 @@ import { getTopics, setTopics as cacheTopics } from '../../lib/topics';
 import { TOPIC_COLORS } from '../../lib/constants';
 import { useSettings, useSaveSettings } from '../../hooks/useSettings';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { TopicDialog } from './TopicDialog';
 
 export function TopicsSection() {
   const { t } = useLanguage();
@@ -13,7 +14,7 @@ export function TopicsSection() {
 
   // Local state for topics editing
   const [topics, setTopics] = useState<TopicConfig[]>(getTopics());
-  const [editingTopic, setEditingTopic] = useState<TopicConfig | null>(null);
+  const [dialogTopic, setDialogTopic] = useState<TopicConfig | null>(null);
   const [isAdding, setIsAdding] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -117,8 +118,13 @@ export function TopicsSection() {
         </div>
         <button
           type="button"
-          onClick={() => setIsAdding(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          onClick={() => setDialogTopic({
+            key: '',
+            label: '',
+            description: '',
+            color: TOPIC_COLORS[0],
+          })}
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 btn-interactive"
         >
           <Plus className="w-4 h-4" />
           {t('settings.topics.addTopic')}
@@ -132,44 +138,36 @@ export function TopicsSection() {
             key={topic.key}
             className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6"
           >
-            {editingTopic?.key === topic.key ? (
-              <TopicForm
-                topic={topic}
-                onSave={(updated) => {
-                  setTopics(topics.map(t => t.key === topic.key ? updated : t));
-                  setEditingTopic(null);
-                }}
-                onCancel={() => setEditingTopic(null)}
-              />
-            ) : (
-              <TopicItem
-                topic={topic}
-                onEdit={() => setEditingTopic(topic)}
-                onDelete={() => handleDelete(topic.key)}
-                onToggleEnabled={() => handleToggleEnabled(topic.key)}
-              />
-            )}
-          </div>
-        ))}
-
-        {isAdding && (
-          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
-            <TopicForm
-              topic={{
-                key: '',
-                label: '',
-                description: '',
-                color: TOPIC_COLORS[0],
-              }}
-              onSave={(newTopic) => {
-                setTopics([...topics, { ...newTopic, key: newTopic.key.toLowerCase().replace(/\s+/g, '-') }]);
-                setIsAdding(false);
-              }}
-              onCancel={() => setIsAdding(false)}
+            <TopicItem
+              topic={topic}
+              onEdit={() => setDialogTopic(topic)}
+              onDelete={() => handleDelete(topic.key)}
+              onToggleEnabled={() => handleToggleEnabled(topic.key)}
             />
           </div>
-        )}
+        ))}
       </div>
+
+      {/* Topic Dialog for Add/Edit */}
+      <TopicDialog
+        isOpen={dialogTopic !== null}
+        topic={dialogTopic}
+        onSave={(savedTopic) => {
+          if (dialogTopic?.key) {
+            // Editing existing topic
+            setTopics(topics.map(t => t.key === dialogTopic.key ? savedTopic : t));
+          } else {
+            // Adding new topic
+            const newTopic = {
+              ...savedTopic,
+              key: savedTopic.key.toLowerCase().replace(/\s+/g, '-')
+            };
+            setTopics([...topics, newTopic]);
+          }
+          setDialogTopic(null);
+        }}
+        onCancel={() => setDialogTopic(null)}
+      />
 
       {/* Success Message */}
       {saveSuccess && (
@@ -278,111 +276,6 @@ function TopicItem({ topic, onEdit, onDelete, onToggleEnabled }: TopicItemProps)
           className="p-2 text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400"
         >
           <Trash2 className="w-4 h-4" />
-        </button>
-      </div>
-    </div>
-  );
-}
-
-interface TopicFormProps {
-  topic: TopicConfig;
-  onSave: (topic: TopicConfig) => void;
-  onCancel: () => void;
-}
-
-function TopicForm({ topic, onSave, onCancel }: TopicFormProps) {
-  const { t } = useLanguage();
-  const [formData, setFormData] = useState<TopicConfig>(topic);
-
-  return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            {t('settings.topics.key')}
-          </label>
-          <input
-            type="text"
-            value={formData.key}
-            onChange={(e) => setFormData({ ...formData, key: e.target.value })}
-            placeholder={t('settings.topics.keyPlaceholder')}
-            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-          />
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            {t('settings.topics.keyHelp')}
-          </p>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            {t('settings.topics.label')}
-          </label>
-          <input
-            type="text"
-            value={formData.label}
-            onChange={(e) => setFormData({ ...formData, label: e.target.value })}
-            placeholder={t('settings.topics.labelPlaceholder')}
-            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-          />
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            {t('settings.topics.labelHelp')}
-          </p>
-        </div>
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-          {t('settings.topics.topicDescription')}
-        </label>
-        <textarea
-          value={formData.description}
-          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-          placeholder={t('settings.topics.descriptionPlaceholder')}
-          rows={3}
-          className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-        />
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-          {t('settings.topics.descriptionHelp')}
-        </p>
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-          {t('settings.topics.badgeColor')}
-        </label>
-        <div className="grid grid-cols-4 gap-2">
-          {TOPIC_COLORS.map((color) => (
-            <button
-              key={color}
-              type="button"
-              onClick={() => setFormData({ ...formData, color })}
-              className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                formData.color === color
-                  ? 'ring-2 ring-blue-500 ring-offset-2'
-                  : 'hover:opacity-80'
-              } ${color}`}
-            >
-              {formData.color === color && '✓'}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
-        >
-          {t('settings.topics.cancel')}
-        </button>
-        <button
-          type="button"
-          onClick={() => onSave(formData)}
-          disabled={!formData.key || !formData.label || !formData.description}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {t('settings.topics.saveTopic')}
         </button>
       </div>
     </div>

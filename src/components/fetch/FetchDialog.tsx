@@ -11,6 +11,7 @@ import { FetchOptions, type FetchStatus } from '../../lib/types';
 import {
   showFetchCompleteNotification,
 } from '../../lib/notifications';
+import '../../styles/animations.css';
 
 interface FetchDialogProps {
   isOpen: boolean;
@@ -456,8 +457,8 @@ export default function FetchDialog({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+    <div className="fixed inset-0 bg-black/60 backdrop-enhanced flex items-center justify-center z-50 p-4">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden modal-content">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
           <div>
@@ -472,7 +473,7 @@ export default function FetchDialog({
           </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 btn-interactive"
             title={displayIsFetching ? t('fetch.closeContinue') : t('fetch.close')}
           >
             <X className="w-5 h-5" />
@@ -486,7 +487,7 @@ export default function FetchDialog({
             <div className="w-48 border-r border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/30 p-3 space-y-1">
               <button
                 onClick={() => setActiveTab('basic')}
-                className={`w-full text-left px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                className={`w-full text-left px-4 py-2.5 rounded-lg text-sm font-medium transition-all btn-interactive ${
                   activeTab === 'basic'
                     ? 'bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-sm'
                     : 'text-gray-600 dark:text-gray-400 hover:bg-white/50 dark:hover:bg-gray-800/50'
@@ -499,7 +500,7 @@ export default function FetchDialog({
               </button>
               <button
                 onClick={() => setActiveTab('ai')}
-                className={`w-full text-left px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                className={`w-full text-left px-4 py-2.5 rounded-lg text-sm font-medium transition-all btn-interactive ${
                   activeTab === 'ai'
                     ? 'bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-sm'
                     : 'text-gray-600 dark:text-gray-400 hover:bg-white/50 dark:hover:bg-gray-800/50'
@@ -512,7 +513,7 @@ export default function FetchDialog({
               </button>
               <button
                 onClick={() => setActiveTab('analysis')}
-                className={`w-full text-left px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                className={`w-full text-left px-4 py-2.5 rounded-lg text-sm font-medium transition-all btn-interactive ${
                   activeTab === 'analysis'
                     ? 'bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 shadow-sm'
                     : 'text-gray-600 dark:text-gray-400 hover:bg-white/50 dark:hover:bg-gray-800/50'
@@ -1316,7 +1317,7 @@ export default function FetchDialog({
           {result && !displayIsFetching ? (
             <button
               onClick={onClose}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 btn-interactive"
             >
               {t('fetch.footer.done')}
             </button>
@@ -1328,7 +1329,7 @@ export default function FetchDialog({
               </div>
               <button
                 onClick={handleCancelFetch}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center gap-2"
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center gap-2 btn-interactive"
               >
                 <Square className="w-4 h-4" />
                 {t('fetch.footer.cancelFetch')}
@@ -1338,14 +1339,14 @@ export default function FetchDialog({
             <>
               <button
                 onClick={onClose}
-                className="px-6 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
+                className="px-6 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 btn-interactive"
               >
                 {t('fetch.footer.cancel')}
               </button>
               <button
                 onClick={handleStartFetch}
                 disabled={!canStartFetch}
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 btn-interactive"
               >
                 <Play className="w-4 h-4" />
                 {t('fetch.footer.startFetch')}

@@ -10,6 +10,7 @@ import CollectionsPage from './pages/CollectionsPage';
 import CollectionDetailPage from './pages/CollectionDetailPage';
 import SettingsPage from './pages/SettingsPage';
 import './App.css';
+import './styles/animations.css';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -26,13 +27,13 @@ function App() {
       <BrowserRouter>
         <AppShell>
           <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/papers" element={<PapersPage />} />
-            <Route path="/papers/:id" element={<PaperDetailPage />} />
-            <Route path="/spam" element={<SpamPage viewMode="grid" />} />
-            <Route path="/collections" element={<CollectionsPage />} />
-            <Route path="/collections/:id" element={<CollectionDetailPage />} />
-            <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/" element={<div className="page-transition"><HomePage /></div>} />
+            <Route path="/papers" element={<div className="page-transition"><PapersPage /></div>} />
+            <Route path="/papers/:id" element={<div className="page-transition"><PaperDetailPage /></div>} />
+            <Route path="/spam" element={<div className="page-transition"><SpamPage viewMode="grid" /></div>} />
+            <Route path="/collections" element={<div className="page-transition"><CollectionsPage /></div>} />
+            <Route path="/collections/:id" element={<div className="page-transition"><CollectionDetailPage /></div>} />
+            <Route path="/settings" element={<div className="page-transition"><SettingsPage /></div>} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </AppShell>

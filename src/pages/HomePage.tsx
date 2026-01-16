@@ -9,6 +9,7 @@ import { useSettings } from '../hooks/useSettings';
 import { usePaperCount } from '../hooks/usePapers';
 import { useLanguage } from '../contexts/LanguageContext';
 import type { Settings } from '../lib/types';
+import '../styles/animations.css';
 
 export default function HomePage() {
   const { t } = useLanguage();
@@ -141,7 +142,7 @@ export default function HomePage() {
               isFetching && !isCompleting ? (
                 <button
                   onClick={() => setIsFetchDialogOpen(true)}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2 btn-interactive"
                 >
                   <Loader2 className="w-4 h-4 animate-spin" />
                   {t('home.gettingStarted.steps.4.viewProgress')}
@@ -149,7 +150,7 @@ export default function HomePage() {
               ) : (
                 <button
                   onClick={() => setIsFetchDialogOpen(true)}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2 btn-interactive"
                 >
                   <Download className="w-4 h-4" />
                   {t('home.gettingStarted.steps.4.action')}
@@ -166,7 +167,7 @@ export default function HomePage() {
               action={
                 <Link
                   to="/papers"
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2"
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2 btn-interactive"
                 >
                   <BookOpen className="w-4 h-4" />
                   {t('home.gettingStarted.steps.5.action')}
@@ -347,7 +348,7 @@ function FetchStatusCard({ isFetching, fetchStatus, onOpenDialog }: FetchStatusC
   return (
     <button
       onClick={onOpenDialog}
-      className={`group bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md border-2 border-blue-500 dark:border-blue-400 p-6 text-left w-full transition-all duration-200 hover:border-blue-600 dark:hover:border-blue-300`}
+      className={`group bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md border-2 border-blue-500 dark:border-blue-400 p-6 text-left w-full transition-all duration-200 hover:border-blue-600 dark:hover:border-blue-300 btn-interactive`}
     >
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-semibold text-blue-600 dark:text-blue-400">Fetch Papers</h3>

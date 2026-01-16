@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { AlertTriangle, X } from 'lucide-react';
+import '../../styles/animations.css';
 
 export interface ModalProps {
   isOpen: boolean;
@@ -87,7 +88,7 @@ export function Modal({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
       <div
-        className={`absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-200 ${
+        className={`absolute inset-0 bg-black/60 backdrop-enhanced transition-opacity duration-200 ${
           isClosing ? 'opacity-0' : 'opacity-100'
         }`}
         onClick={handleClose}
@@ -97,7 +98,7 @@ export function Modal({
       <div
         className={`relative w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl shadow-2xl transition-all duration-200 ${
           isClosing ? 'scale-95 opacity-0' : 'scale-100 opacity-100'
-        }`}
+        } modal-content`}
       >
         {/* Header */}
         <div className="p-6 pb-4">
@@ -121,7 +122,7 @@ export function Modal({
             <button
               onClick={handleClose}
               disabled={isConfirming}
-              className="flex-shrink-0 p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-shrink-0 p-1.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed btn-interactive"
               aria-label="Close modal"
             >
               <X className="w-5 h-5" />
@@ -134,14 +135,14 @@ export function Modal({
           <button
             onClick={handleClose}
             disabled={isConfirming}
-            className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed btn-interactive"
           >
             {cancelText}
           </button>
           <button
             onClick={handleConfirm}
             disabled={isConfirming}
-            className={`px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-800 ${style.buttonBg}`}
+            className={`px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-800 ${style.buttonBg} btn-interactive`}
           >
             {isConfirming && (
               <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />

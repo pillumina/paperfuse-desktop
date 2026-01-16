@@ -153,12 +153,15 @@ export default function CollectionsPage() {
       )}
 
       {/* Create/Edit Dialog */}
-      <CreateCollectionDialog
-        isOpen={isDialogOpen}
-        onClose={() => setIsDialogOpen(false)}
-        onSubmit={handleSubmit}
-        collection={editingCollection}
-      />
+      {isDialogOpen && (
+        <CreateCollectionDialog
+          key={editingCollection ? `edit-${editingCollection.id}` : 'create'}
+          isOpen={isDialogOpen}
+          onClose={() => setIsDialogOpen(false)}
+          onSubmit={handleSubmit}
+          collection={editingCollection}
+        />
+      )}
     </div>
   );
 }

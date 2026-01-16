@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { X } from 'lucide-react';
 import type { CreateCollectionInput, CollectionWithPaperCount } from '../../lib/types';
 
@@ -26,24 +26,10 @@ export function CreateCollectionDialog({
   onSubmit,
   collection
 }: CreateCollectionDialogProps) {
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [selectedColor, setSelectedColor] = useState<string | undefined>(undefined);
-
-  // Reset form when dialog opens/closes
-  useEffect(() => {
-    if (isOpen) {
-      if (collection) {
-        setName(collection.name);
-        setDescription(collection.description || '');
-        setSelectedColor(collection.color || undefined);
-      } else {
-        setName('');
-        setDescription('');
-        setSelectedColor(undefined);
-      }
-    }
-  }, [isOpen, collection]);
+  // Initialize form with collection values on mount
+  const [name, setName] = useState(collection?.name || '');
+  const [description, setDescription] = useState(collection?.description || '');
+  const [selectedColor, setSelectedColor] = useState<string | undefined>(collection?.color);
 
   if (!isOpen) return null;
 
@@ -59,8 +45,12 @@ export function CreateCollectionDialog({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md border border-gray-200 dark:border-gray-700 animate-scale-in">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/50 modal-backdrop" onClick={onClose} />
+
+      {/* Content */}
+      <div className="relative bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md border border-gray-200 dark:border-gray-700 modal-content">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white">

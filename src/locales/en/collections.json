@@ -19,6 +19,7 @@
   "descriptionPlaceholder": "Optional description",
   "color": "Color",
   "paperCount": "{{count}} papers",
+  "papers": "papers",
   "addTo": "Add to Collection",
   "removeFrom": "Remove from Collection",
   "selectCollection": "Select Collection",

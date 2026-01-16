@@ -19,6 +19,7 @@
   "descriptionPlaceholder": "可选描述",
   "color": "颜色",
   "paperCount": "{{count}} 篇论文",
+  "papers": "篇论文",
   "addTo": "添加到收藏",
   "removeFrom": "从收藏移除",
   "selectCollection": "选择收藏",

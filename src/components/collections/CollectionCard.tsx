@@ -1,6 +1,7 @@
 import { FolderOpen, Trash2, Edit2, FileText, Calendar } from 'lucide-react';
 import type { CollectionWithPaperCount } from '../../lib/types';
 import { formatRelativeTime } from '../../lib/utils';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 interface CollectionCardProps {
   collection: CollectionWithPaperCount;
@@ -21,6 +22,7 @@ const COLORS = [
 ];
 
 export function CollectionCard({ collection, onDelete, onEdit, onClick }: CollectionCardProps) {
+  const { t } = useLanguage();
   const colorClass = collection.color || COLORS[Math.abs(collection.id.charCodeAt(0)) % COLORS.length];
 
   return (
@@ -86,7 +88,7 @@ export function CollectionCard({ collection, onDelete, onEdit, onClick }: Collec
         <div className="flex items-center justify-between text-sm">
           <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
             <FileText className="w-4 h-4" />
-            <span>{collection.paper_count} paper{collection.paper_count !== 1 ? 's' : ''}</span>
+            <span>{t('collections.paperCount', { count: collection.paper_count })}</span>
           </div>
           <div className="flex items-center gap-2 text-gray-500 dark:text-gray-500">
             <Calendar className="w-4 h-4" />
